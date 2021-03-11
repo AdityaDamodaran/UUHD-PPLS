@@ -94,6 +94,6 @@ Vagrant.configure("2") do |config|
     make install
     ldconfig -v
     cd /vagrant
-    pip install -r requirements.txt 
+    python3 -m pip install -r requirements.txt 
   SHELL
 end
