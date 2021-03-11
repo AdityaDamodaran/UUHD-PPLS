@@ -1,3 +1,8 @@
+# Copyright © 2021 by University of Luxembourg.
+# Developed at SnT APSIA by:
+# Aditya Damodaran, aditya.damodaran@uni.lu
+# Alfredo Rial, alfredo.rial@uni.lu
+
 import sys
 
 

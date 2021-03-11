@@ -1,3 +1,8 @@
+# Copyright © 2021 by University of Luxembourg.
+# Developed at SnT APSIA by:
+# Aditya Damodaran, aditya.damodaran@uni.lu
+# Alfredo Rial, alfredo.rial@uni.lu
+
 from __future__ import print_function
 import hashlib
 import multiprocessing
@@ -216,7 +221,7 @@ class IntegerCommitment:
     def __init__(self, p, q, keylength):
         self.keylength = keylength
         if p == 0 or q == 0:
-            #(p, q, n) = rsa_group.paramgen(self.keylength)
+            # (p, q, n) = rsa_group.paramgen(self.keylength)
             self.group = IntegerGroup()
             self.group.paramgen(keylength)
             p = self.group.p

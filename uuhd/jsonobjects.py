@@ -1,3 +1,9 @@
+# Copyright © 2021 by University of Luxembourg.
+# Developed at SnT APSIA by:
+# Aditya Damodaran, aditya.damodaran@uni.lu
+# Alfredo Rial, alfredo.rial@uni.lu
+
+
 def dict_from_class(cls):
     excluded_keys = ["__dict__", "__doc__", "__module__", "__weakref__"]
     return dict(

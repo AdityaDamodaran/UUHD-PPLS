@@ -1,3 +1,8 @@
+# Copyright © 2021 by University of Luxembourg.
+# Developed at SnT APSIA by:
+# Aditya Damodaran, aditya.damodaran@uni.lu
+# Alfredo Rial, alfredo.rial@uni.lu
+
 import weakref
 
 from charm.toolbox.pairinggroup import ZR, G1, G2, pair
@@ -93,7 +98,7 @@ class FZK:
         subinstance_list = instance["ins_i"]
         subwitnesss_list = witness["wit_i"]
 
-        sigma_protocol = SigmaProtocol(instance, "BN256",self.keylength)
+        sigma_protocol = SigmaProtocol(instance, "BN256", self.keylength)
 
         y1 = sigma_protocol.compute_ppe_1(d1, d2, d3, d4, "lhs")
         y2 = sigma_protocol.compute_ppe_2(d1, d5, "lhs")
@@ -274,10 +279,10 @@ class FZK_RD:
 
         rsa_group = RSAGroup()
         self.paillier_encryption = PaillierEncryption(rsa_group)
-        
 
         (self.public_key, self.secret_key) = self.paillier_encryption.keygen(
-            self.keylength            )
+            self.keylength
+        )
 
         # Verifier picks x rand
         x = group.random(ZR)
@@ -488,9 +493,9 @@ class FZK_RD:
         dsa_q = integer(
             78026701315845642650478533423290697952946810503781545303994043249263895825417197979312263873458290625951595165648634453837959641616221499853309829737663096055610272863216947901196216467463121276681626666630641061058671702351757348054165492211737848899078287026481329186785666349501358041565106233731785681339
         )
-        
-        dsa = DSA(dsa_p,dsa_q)
-        
+
+        dsa = DSA(dsa_p, dsa_q)
+
         dsa_keys = dsa.generate_keys(self.keylength)
         hash_y = SHA256(str(y_2).encode("utf-8"))
         dsa_a = dsa.generate_random()
@@ -560,7 +565,7 @@ class FZK_PR3:
         dsa_q = integer(
             78026701315845642650478533423290697952946810503781545303994043249263895825417197979312263873458290625951595165648634453837959641616221499853309829737663096055610272863216947901196216467463121276681626666630641061058671702351757348054165492211737848899078287026481329186785666349501358041565106233731785681339
         )
-        
+
         ic_p = integer(
             333437049425486136095925931727629203622119239282802038455917646172563395024265917241890473852501318262109839243221497854682815506880304349748481648877420618747530394310060738051284980323398797638078562462943477904211178707988798971266777314022673227003284335883622084916018185539789562312940907090712386355299
         )
@@ -570,8 +575,8 @@ class FZK_PR3:
 
         integer_commitment = IntegerCommitment(ic_p, ic_q, self.keylength)
         par_ic = integer_commitment.setup()
-        dsa = DSA(dsa_p,dsa_q)
-        
+        dsa = DSA(dsa_p, dsa_q)
+
         dsa_keys = dsa.generate_keys(self.keylength)
         c = group.random(ZR)
         hash_c = integer(SHA256(bytes(str(c), "utf-8")))
@@ -626,7 +631,7 @@ class FZK_PR3:
             )
 
             self.paillier_encryption = PaillierEncryption(RSAGroup())
-            
+
             (
                 self.public_key,
                 self.secret_key,
@@ -754,7 +759,9 @@ class FZK_PR3:
                 )
                 % paillier_n_2
             ):
-                print("Abort: (FZK_PR) Paillier ciphertext verification failed.")
+                print(
+                    "Abort: (FZK_PR) Paillier ciphertext verification failed."
+                )
                 exit()
             c_t = {
                 "c": paillier_ciphertext_random_open_v[0]["c"]
@@ -777,7 +784,9 @@ class FZK_PR3:
                 )
                 % paillier_n_2
             ):
-                print("Abort: (FZK_PR) Paillier ciphertext verification failed.")
+                print(
+                    "Abort: (FZK_PR) Paillier ciphertext verification failed."
+                )
                 exit()
 
             ppe = ppe * pair(g, gt) ** random_v

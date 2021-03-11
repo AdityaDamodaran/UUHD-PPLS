@@ -1,3 +1,8 @@
+# Copyright © 2021 by University of Luxembourg.
+# Developed at SnT APSIA by:
+# Aditya Damodaran, aditya.damodaran@uni.lu
+# Alfredo Rial, alfredo.rial@uni.lu
+
 import argparse
 import time
 import random
@@ -31,22 +36,24 @@ from uuhd.primitives import (
 )
 from uuhd.measurement_util import get_real_size
 
-parser = argparse.ArgumentParser(description="Implementation of the protocol described in the paper titled 'Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs'")
+parser = argparse.ArgumentParser(
+    description="Implementation of the protocol described in the paper titled 'Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs'"
+)
 parser.add_argument("size", metavar="N", type=int, help="Database size")
 
 parser.add_argument(
     "-k",
     "--keylength",
-    metavar = "K",
-    type = int,
-    help = "Paillier Encryption key size. (Supported values: 1024, 2048)",
+    metavar="K",
+    type=int,
+    help="Paillier Encryption key size. (Supported values: 1024, 2048)",
 )
 parser.add_argument(
     "-r",
     "--randomise",
-    action = 'store_true',
-    default = False,
-    help = "Randomise database state",
+    action="store_true",
+    default=False,
+    help="Randomise database state",
 )
 # parser.add_argument('-w','--writetofile', action='writetofile', help='Paillier
 
@@ -58,7 +65,7 @@ args = parser.parse_args()
 
 if args.keylength == 1024 or args.keylength == 2048:
     keylength = args.keylength
-    
+
 if args.size != None and int(args.size) > 10 and int(args.size) > 800000:
     db_size = int(args.size)
 
@@ -167,7 +174,9 @@ class Updater:
                 + str(record["coms"])
             )
         else:
-            print("Abort: (Updater) Unrecognised message: " + str(m["message"]))
+            print(
+                "Abort: (Updater) Unrecognised message: " + str(m["message"])
+            )
             exit()
 
     # Responses from U to messages from other FZKs
@@ -420,7 +429,9 @@ class Reader:
 
     def test_witness_update(self, sid, p, i_list):
         if len(self.l_par) == 0 or len(self.l_store) == 0:
-            print("Abort: (Reader) Party hasn't been initialised. (HD witness update tests)")
+            print(
+                "Abort: (Reader) Party hasn't been initialised. (HD witness update tests)"
+            )
             exit()
 
         r2 = self.l_par[0]["par"]["group"].random(ZR)
@@ -434,7 +445,9 @@ class Reader:
 
         for i_list_item in i_list:
             if self.l_store[0]["x"][i_list_item.i] != i_list_item.vr:
-                print("Abort: (Reader) input tuples do not match HD state. (HD witness update tests)")
+                print(
+                    "Abort: (Reader) input tuples do not match HD state. (HD witness update tests)"
+                )
                 exit()
             temp_witness_record = WitnessRecord(
                 i_list_item.i,
@@ -468,7 +481,6 @@ class Reader:
                 self.l_store[0]["x"][i_list_item.i],
                 self.l_store[0]["x"][i_list_item.i] + 2,
             )
-        
 
     def read(self, sid, p, i_list):
 
@@ -486,7 +498,9 @@ class Reader:
         instance_records = []
         for i_list_item in i_list:
             if self.l_store[0]["x"][i_list_item.i] != i_list_item.vr:
-                print("Abort: (Reader) input tuples do not match HD state. (read)")
+                print(
+                    "Abort: (Reader) input tuples do not match HD state. (read)"
+                )
                 exit()
             t_comp_vcom_start = time.time()
             temp_witness_record = WitnessRecord(
@@ -700,7 +714,7 @@ def register():
     p = reader_k.first_read(sid, 0)
     for i in range(0, db_size):
         if args.randomise == True:
-            db_list.append(random.randint(0,99))
+            db_list.append(random.randint(0, 99))
         else:
             db_list.append(0)
         empty_db_list.append(0)
@@ -733,7 +747,9 @@ def redeem(points):
     # TODO: Store positional coms
     t_redeem_start = time.time()
     if points > reader_k.l_store[0]["x"][db_size]:
-        print("Abort: (Reader) Insufficient loyalty points for this operation. (redeem)")
+        print(
+            "Abort: (Reader) Insufficient loyalty points for this operation. (redeem)"
+        )
     else:
         com_db_size = pedersen_commitment.commit(
             reader_k.l_par[0]["par_c"], db_size
@@ -753,7 +769,7 @@ def redeem(points):
             "N": db_size,
             "openN": com_db_size["open"],
         }
-        f_zkrd = FZK_RD(f_nym,keylength)
+        f_zkrd = FZK_RD(f_nym, keylength)
         f_zkrd.prove(
             sid,
             witness_rd,
@@ -771,7 +787,9 @@ def redeem(points):
             )
             == 0
         ):
-            print("Abort: (Updater) Loyalty point commitments do not hold. (redeem)")
+            print(
+                "Abort: (Updater) Loyalty point commitments do not hold. (redeem)"
+            )
             exit()
 
         com_list = reader_k.prepare_committed_record(
@@ -896,28 +914,28 @@ com_list = reader_k.prepare_committed_record([5])
 p = reader_k.test_witness_update(sid, 0, com_list)
 
 output_headings = [
-            "N",
-            "DB Size",
-            "Paillier Key Length",
-            "First Update",
-            "Computation of Vcom",
-            "1 Entry Update",
-            "1 Entry Read",
-            "5 Entry Read",
-            "Registration",
-            "Purchase",
-            "Redemption",
-            "1 Entry Profiling",
-            "5 Entry Profiling",
-            "10 Entry Profiling",
-            "Setup",
-        ]
+    "N",
+    "DB Size",
+    "Paillier Key Length",
+    "First Update",
+    "Computation of Vcom",
+    "1 Entry Update",
+    "1 Entry Read",
+    "5 Entry Read",
+    "Registration",
+    "Purchase",
+    "Redemption",
+    "1 Entry Profiling",
+    "5 Entry Profiling",
+    "10 Entry Profiling",
+    "Setup",
+]
 
 results_workbook = load_workbook("Res.xlsx")
 results_worksheet = results_workbook.active
 results_max_row = results_worksheet.max_row
 results_counter = results_worksheet["A" + str(results_max_row)].value + 1
-if(results_max_row==0):
+if results_max_row == 0:
     results_worksheet.append(output_headings)
 timing_data = [
     results_counter,

@@ -1,3 +1,8 @@
+# Copyright © 2021 by University of Luxembourg.
+# Developed at SnT APSIA by:
+# Aditya Damodaran, aditya.damodaran@uni.lu
+# Alfredo Rial, alfredo.rial@uni.lu
+
 import json
 from charm.core.engine.util import objectToBytes, bytesToObject
 from charm.toolbox.pairinggroup import PairingGroup, pair, ZR
@@ -48,7 +53,7 @@ class SigmaProtocol:
             public_key["Z"],
             public_key["U"][1],
         )
-        
+
         self.keylength = keylength
 
         self.one = 1
@@ -74,9 +79,8 @@ class SigmaProtocol:
         dsa_q = integer(
             78026701315845642650478533423290697952946810503781545303994043249263895825417197979312263873458290625951595165648634453837959641616221499853309829737663096055610272863216947901196216467463121276681626666630641061058671702351757348054165492211737848899078287026481329186785666349501358041565106233731785681339
         )
-        
 
-        self.dsa = DSA(dsa_p,dsa_q)
+        self.dsa = DSA(dsa_p, dsa_q)
         self.dsa_keys = self.dsa.generate_keys(keylength)
 
         rsa_group = RSAGroup()
@@ -91,9 +95,8 @@ class SigmaProtocol:
         ic_q = integer(
             294092988306368388636535355362351220952777074915662080329740789451817968606482246364359892865057621298389179478994706465098262699509935804409002480293234947971872131356003427444279672200378079370695651721652248116723483318427208508192689675310517884904089979454005634358395042846262967137935407297336359215239
         )
- 
-        
-        self.integer_commitment = IntegerCommitment(ic_p,ic_q, self.keylength)
+
+        self.integer_commitment = IntegerCommitment(ic_p, ic_q, self.keylength)
 
         self.par_ic = self.integer_commitment.setup()
 
@@ -455,7 +458,7 @@ class SigmaProtocol:
                 rdi_3 + (hash_c * di_3),
                 rdi_4 + (hash_c * di_4),
                 rdi_5 + (hash_c * di_5),
-            )  
+            )
             s_o_j.append_subwitnesses(temp_s_j_i)
 
         return s_j, hashes_j, hash_c
@@ -572,7 +575,9 @@ class SigmaProtocol:
                 )
             )
         ):
-            print("Abort: (Sigma Protocol) Paillier ciphertext verification failed.")
+            print(
+                "Abort: (Sigma Protocol) Paillier ciphertext verification failed."
+            )
             exit()
         for subwitness in witness_paillier_ciphertexts["wit_i"]:
             if (
@@ -617,7 +622,9 @@ class SigmaProtocol:
                     )
                 )
             ):
-                print("Abort: (Sigma Protocol) Paillier ciphertext verification failed.")
+                print(
+                    "Abort: (Sigma Protocol) Paillier ciphertext verification failed."
+                )
                 exit()
             if (
                 not (
@@ -671,7 +678,9 @@ class SigmaProtocol:
                     )
                 )
             ):
-                print("Abort: (Sigma Protocol) Paillier ciphertext verification failed.")
+                print(
+                    "Abort: (Sigma Protocol) Paillier ciphertext verification failed."
+                )
                 exit()
         return 1
 
@@ -936,7 +945,9 @@ class SigmaProtocol:
                     )
                 )
             ):
-                print("Abort: (Sigma Protocol) Integer commitment check failed.")
+                print(
+                    "Abort: (Sigma Protocol) Integer commitment check failed."
+                )
                 exit()
 
         return 1
