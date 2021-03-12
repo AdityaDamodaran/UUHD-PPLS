@@ -9,7 +9,7 @@ Authors:
 -->
 # Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs
 
-This repository contains the source code for an implementation of the HD (Unlinkable Updatable Hiding Database) primitive described in our paper titled "Unlinkable Updatable Hiding Databases and Privacy-Prserving Loyalty Programs". It also includes an implementation of the Privacy-Preserving Loyalty Program protocol put forward in this paper, which uses the aforementioned primitive. 
+This repository contains the source code for an implementation of the HD (Unlinkable Updatable Hiding Database) primitive described in our paper titled "Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs". It also includes an implementation of the Privacy-Preserving Loyalty Program protocol put forward in this paper, which uses the aforementioned primitive. 
 
 These implementations were used to measure the storage and computation costs of the cryptographic operations in our primitive and the protocol, for the _Efficiency Analysis_ sections of our paper.
 
@@ -61,5 +61,5 @@ optional arguments:
 
 # Acknowledgements
 
-This research is supported by the Luxembourg National Research Fund (FNR) CORE
+This research was supported by the Luxembourg National Research Fund (FNR) CORE
 project “Stateful Zero-Knowledge” (Project code: C17/11650748).
