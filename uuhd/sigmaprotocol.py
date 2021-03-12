@@ -1,9 +1,14 @@
-# Copyright © 2021 by University of Luxembourg.
-# Developed at SnT APSIA by:
-# Aditya Damodaran, aditya.damodaran@uni.lu
-# Alfredo Rial, alfredo.rial@uni.lu
+'''
+SPDX-FileCopyrightText: 2021 University of Luxembourg
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDXVersion: SPDX-2.2
+Authors: 
+       Aditya Damodaran, aditya.damodaran@uni.lu
+       Alfredo Rial, alfredo.rial@uni.lu
+'''
 
 import json
+
 from charm.core.engine.util import objectToBytes, bytesToObject
 from charm.toolbox.pairinggroup import PairingGroup, pair, ZR
 from charm.toolbox.integergroup import RSAGroup

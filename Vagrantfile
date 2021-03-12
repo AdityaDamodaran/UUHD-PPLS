@@ -1,3 +1,8 @@
+ 
+# SPDX-FileCopyrightText: 2021 University of Luxembourg
+# SPDX-License-Identifier: CC0-1.0
+# SPDXVersion: SPDX-2.2
+
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 

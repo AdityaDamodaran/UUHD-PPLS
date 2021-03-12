@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2021 University of Luxembourg
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDXVersion: SPDX-2.2
+Authors: 
+       Aditya Damodaran, aditya.damodaran@uni.lu
+       Alfredo Rial, alfredo.rial@uni.lu
+-->
 # Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs
 
 This repository contains the source code for an implementation of the HD (Unlinkable Updatable Hiding Database) primitive described in our paper titled "Unlinkable Updatable Hiding Databases and Privacy-Prserving Loyalty Programs". It also includes an implementation of the Privacy-Preserving Loyalty Program protocol put forward in this paper, which uses the aforementioned primitive. 
