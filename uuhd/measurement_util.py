@@ -1,4 +1,4 @@
-'''
+"""
 SPDX-FileCopyrightText: 2021 University of Luxembourg
 SPDX-License-Identifier: GPL-3.0-or-later
 SPDXVersion: SPDX-2.2
@@ -6,7 +6,7 @@ SPDXVersion: SPDX-2.2
 Authors: 
        Aditya Damodaran, aditya.damodaran@uni.lu
        Alfredo Rial, alfredo.rial@uni.lu
-'''
+"""
 
 import sys
 

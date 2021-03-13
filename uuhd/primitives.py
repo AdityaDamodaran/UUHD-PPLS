@@ -1,4 +1,4 @@
-'''
+"""
 SPDX-FileCopyrightText: 2021 University of Luxembourg
 SPDX-License-Identifier: GPL-3.0-or-later
 SPDXVersion: SPDX-2.2
@@ -6,7 +6,7 @@ SPDXVersion: SPDX-2.2
 Authors: 
        Aditya Damodaran, aditya.damodaran@uni.lu
        Alfredo Rial, alfredo.rial@uni.lu
-'''
+"""
 
 from __future__ import print_function
 import hashlib
@@ -25,7 +25,7 @@ from charm.toolbox.integergroup import (
 
 from charm.core.math import integer as charminteger
 from charm.toolbox.integergroup import lcm, integer
-from uuhd.measurementutil import get_real_size
+from uuhd.measurement_util import get_real_size
 
 # Paillier Enc
 from charm.schemes.pkenc import pkenc_paillier99

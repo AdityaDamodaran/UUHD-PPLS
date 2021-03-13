@@ -1,4 +1,4 @@
-'''
+"""
 SPDX-FileCopyrightText: 2021 University of Luxembourg
 SPDX-License-Identifier: GPL-3.0-or-later
 SPDXVersion: SPDX-2.2
@@ -6,16 +6,17 @@ SPDXVersion: SPDX-2.2
 Authors: 
        Aditya Damodaran, aditya.damodaran@uni.lu
        Alfredo Rial, alfredo.rial@uni.lu
-'''
+"""
 
 import argparse
 import time
 import random
 import sys
+from pathlib import Path
 from collections import namedtuple
 
 from charm.toolbox.pairinggroup import PairingGroup, ZR, G1, G2
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from texttable import Texttable
 
 from uuhd.jsonobjects import (
@@ -111,6 +112,12 @@ WitnessRecord = namedtuple(
 )
 
 InstanceRecord = namedtuple("InstanceRecord", "ccom_i ccom_ri")
+
+
+def draw_table(headings, data):
+    table = Texttable()
+    table.add_rows([headings, data])
+    print(table.draw())
 
 
 # Sets up the CRS (public parameters for a Vector Commitment with a database of size 'nsize', and parameters for the Pedersen commitment scheme
@@ -935,11 +942,20 @@ output_headings = [
     "10 Entry Profiling",
     "Setup",
 ]
-
-results_workbook = load_workbook("Res.xlsx")
+file_name = "UUHD-PPLS-Timing-data.xlsx"
+if not Path(file_name).exists():
+    results_workbook = Workbook()
+    results_counter = 1
+    results_max_row = 0
+else:
+    results_workbook = load_workbook(file_name)
+    results_max_row = results_workbook.active.max_row
+    results_counter = (
+        results_workbook.active["A" + str(results_max_row)].value + 1
+    )
 results_worksheet = results_workbook.active
-results_max_row = results_worksheet.max_row
-results_counter = results_worksheet["A" + str(results_max_row)].value + 1
+
+
 if results_max_row == 0:
     results_worksheet.append(output_headings)
 timing_data = [
@@ -960,13 +976,8 @@ timing_data = [
     float(t_setup),
 ]
 results_worksheet.append(timing_data)
-results_workbook.save("UUHD-PPLS-Timing-data.xlsx")
+results_workbook.save(file_name)
 
-t = Texttable()
-t.add_rows(
-    [
-        output_headings,
-        timing_data,
-    ]
-)
-print(t.draw())
+draw_table(output_headings[:5], timing_data[:5])
+draw_table(output_headings[5:10], timing_data[5:10])
+draw_table(output_headings[10:], timing_data[10:])
