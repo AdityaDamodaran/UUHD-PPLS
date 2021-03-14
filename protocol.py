@@ -72,7 +72,7 @@ args = parser.parse_args()
 if args.keylength == 1024 or args.keylength == 2048:
     keylength = args.keylength
 
-if args.size != None and int(args.size) > 10 and int(args.size) > 800000:
+if args.size != None and int(args.size) > 10 and int(args.size) < 800000:
     db_size = int(args.size)
 
 
@@ -806,7 +806,8 @@ def redeem(points):
             exit()
 
         com_list = reader_k.prepare_committed_record(
-            [db_size, reader_k.l_store[0]["x"][db_size]]
+        #    [db_size, reader_k.l_store[0]["x"][db_size]]
+            [db_size]
         )
         p = reader_k.read(sid, p, com_list)
 
@@ -868,7 +869,7 @@ def profile(start, end, val):
 
     for i in range(start, end + 1):
         com_list = reader_k.prepare_committed_record(
-            [db_size, reader_k.l_store[0]["x"][db_size]]
+            [i]
         )
         p = reader_k.read(sid, p, com_list)
         updater.update(sid, p, empty_db_list)

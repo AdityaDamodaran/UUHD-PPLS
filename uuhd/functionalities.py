@@ -19,6 +19,7 @@ from uuhd.jsonobjects import dict_from_class
 from uuhd.primitives import PaillierEncryption, SHA256, DSA, IntegerCommitment
 from uuhd.sigmaprotocol import (
     SigmaProtocol,
+    get_record_by_i,
     get_record_by_index,
     num_to_str,
     sign_u,
@@ -281,7 +282,7 @@ class FZK_RD:
         (self.public_key, self.secret_key) = self.paillier_encryption.keygen(
             self.keylength
         )
-        SigmaProtocol.range_proof(
+        (c,y) = SigmaProtocol.range_proof(
             (v_n - points), com_v_n, open_v_n, points, ped_g, ped_h, group
         )
         v_n_c = self.paillier_encryption.encrypt(
@@ -377,7 +378,7 @@ class FZK_RD:
         dsa = DSA(dsa_p, dsa_q)
 
         dsa_keys = dsa.generate_keys(self.keylength)
-        hash_y = SHA256(str(y_2).encode("utf-8"))
+        hash_y = SHA256(str(y).encode("utf-8"))
         dsa_a = dsa.generate_random()
         dsa_b = dsa.generate_random()
         g_d = dsa_keys[0]["g"] ** dsa_a
@@ -386,7 +387,7 @@ class FZK_RD:
         ) * (dsa_keys[0]["y"] ** g_d)
         dsa_c = (g_d ** dsa_b) * (tag ** integer(hash_y))
 
-        hash_m = SHA256(str(y_2).encode("utf-8"))
+        hash_m = SHA256(str(y).encode("utf-8"))
         dsa_h = (
             dsa_keys[0]["g"] ** integer(SHA256(str(sid).encode("utf-8")))
         ) * (dsa_keys[0]["y"] ** g_d)
@@ -447,8 +448,8 @@ class FZK_PR3:
         s_ppe = 1
 
         for instance_record in instance_pr:
-            witness_record = self.get_record_by_index(
-                witness_pr, instance_record["i"]
+            witness_record = get_record_by_i(
+                instance_record["i"], witness_pr
             )
             random_v, random_opening_v = group.random(ZR), group.random(ZR)
             y_list.append(
@@ -538,9 +539,9 @@ class FZK_PR3:
             s_o_v = random_opening_v + (c * witness_record["openv"])
             if not (
                 (
-                    self.get_record_by_index(t_list, witness_record["i"])["e"]
+                    get_record_by_i(witness_record["i"], t_list)["e"]
                     * (
-                        self.get_record_by_index(y_list, witness_record["i"])[
+                        get_record_by_i(witness_record["i"], y_list)[
                             "e"
                         ]
                     )
@@ -551,8 +552,6 @@ class FZK_PR3:
                 print("Abort: (FZK_PR) PPE Check failed.")
                 exit()
             s_ppe = s_ppe * pair(g, gt) ** (s_v)
-            #    integer_commitment_record = self.get_record_by_index(integer_commitments, witness_record["i"])
-            #    randinteger_commitment_record = self.get_record_by_index(random_integer_commitments, witness_record["i"])
             hash_random_v = integer(SHA256(bytes(str(random_v), "utf-8")))
             hash_random_open_v = integer(
                 SHA256(bytes(str(random_opening_v), "utf-8"))
@@ -692,7 +691,7 @@ class FZK_PR3:
         ped_h = par_c["h"]
         for witness_record in witness_pr:
             open_i = witness_record["openi"]
-            com_i = self.get_record_by_index(instance_pr, witness_record["i"])[
+            com_i = get_record_by_i(witness_record["i"], instance_pr)[
                 "comi"
             ]
             SigmaProtocol.range_proof(

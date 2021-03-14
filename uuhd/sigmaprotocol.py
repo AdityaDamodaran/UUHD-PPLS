@@ -12,7 +12,7 @@ import json
 from collections import namedtuple
 
 from charm.core.engine.util import objectToBytes, bytesToObject
-from charm.toolbox.pairinggroup import PairingGroup, pair, ZR
+from charm.toolbox.pairinggroup import PairingGroup, pair, ZR, G2
 from charm.toolbox.integergroup import RSAGroup
 from charm.core.engine.util import serializeList
 from charm.core.math.integer import integer
@@ -33,6 +33,10 @@ def get_record_by_index(index, list):
         if item["index"] == index:
             return item
 
+def get_record_by_i(index, list):
+    for item in list:
+        if item["i"] == index:
+            return item
 
 def generate_n_random_exponents(n):
     exponents = []
@@ -40,15 +44,15 @@ def generate_n_random_exponents(n):
         exponents.append(pairing_group.random(ZR))
     return exponents
 
-    def num_to_str(self, num, length):
-        str_num = str(num)
-        if len(str_num) < length:
-            str_num = "0" * (length - len(str_num)) + str_num
+def num_to_str(num, length):
+    str_num = str(num)
+    if len(str_num) < length:
+        str_num = "0" * (length - len(str_num)) + str_num
 
-        return str_num
+    return str_num
 
 
-def sign_u(self, i, g, x):
+def sign_u(i, g, x):
     return g ** ((x + i) ** -1)
 
 
@@ -171,14 +175,14 @@ class SigmaProtocol:
             return (
                 (pair(record["sig"]["R_id"], self.v) ** self.one)
                 * (pair(record["sig"]["S_id"], self.gt) ** self.one)
-                * (pair(self.g ** self.sid, self.w2) ** self.one)
+                * (pair(self.g ** self.sid, self.w_2) ** self.one)
                 * (pair(self.g, self.z) ** -1)
             )
         else:
             return (
                 (pair(self.h, self.v) ** d_i_1)
                 * (pair(self.h, self.gt) ** d_i_2)
-                * (pair(self.g, self.w1) ** -i)
+                * (pair(self.g, self.w_1) ** -i)
             )
 
     def compute_ppe_6(self, index, d_i_1, d_i_3, d_i_4, side):
@@ -189,7 +193,7 @@ class SigmaProtocol:
                     pair(record["sig"]["R_id"], record["sig"]["T_id"])
                     ** self.one
                 )
-                * (pair(self.u1, record["phd_i"]) ** self.one)
+                * (pair(self.u_1, record["phd_i"]) ** self.one)
                 * (pair(self.h, self.ht) ** (d_i_1 * d_i_3))
                 * (pair(self.g, self.gt) ** -1)
             )
@@ -198,7 +202,7 @@ class SigmaProtocol:
             return (
                 (pair(record["sig"]["R_id"], self.ht) ** d_i_3)
                 * (pair(self.h, record["sig"]["T_id"]) ** d_i_1)
-                * (pair(self.u1, self.ht) ** d_i_4)
+                * (pair(self.u_1, self.ht) ** d_i_4)
             )
 
     def compute_ppe_7(self, index, d_i_4, d_i_5, vr, side):
@@ -1031,7 +1035,7 @@ class SigmaProtocol:
 
         for subwitness in witness["wit_i"]:
             #
-            [d_i_1, di_2, d_i_3, d_i_4, d_i_5] = (
+            [d_i_1, d_i_2, d_i_3, d_i_4, d_i_5] = (
                 subwitness["di_1"],
                 subwitness["di_2"],
                 subwitness["di_3"],
@@ -1149,19 +1153,19 @@ class SigmaProtocol:
                 subwitness["di_4"],
                 subwitness["di_5"],
             )
-            ciphertext_d_i_1 = self.integer_commitment.commit(
+            commitment_d_i_1 = self.integer_commitment.commit(
                 self.par_ic, integer(SHA256(bytes(str(d_i_1), "utf-8")))
             )
-            ciphertext_d_i_2 = self.integer_commitment.commit(
+            commitment_d_i_2 = self.integer_commitment.commit(
                 self.par_ic, integer(SHA256(bytes(str(d_i_2), "utf-8")))
             )
-            ciphertext_d_i_3 = self.integer_commitment.commit(
+            commitment_d_i_3 = self.integer_commitment.commit(
                 self.par_ic, integer(SHA256(bytes(str(d_i_3), "utf-8")))
             )
-            ciphertext_d_i_4 = self.integer_commitment.commit(
+            commitment_d_i_4 = self.integer_commitment.commit(
                 self.par_ic, integer(SHA256(bytes(str(d_i_4), "utf-8")))
             )
-            ciphertext_d_i_5 = self.integer_commitment.commit(
+            commitment_d_i_5 = self.integer_commitment.commit(
                 self.par_ic, integer(SHA256(bytes(str(d_i_5), "utf-8")))
             )
             if is_random:
@@ -1376,18 +1380,18 @@ class SigmaProtocol:
         u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         a_i = [
-            self.sign_u(0, ped_g, x),
-            self.sign_u(1, ped_g, x),
-            self.sign_u(2, ped_g, x),
-            self.sign_u(3, ped_g, x),
-            self.sign_u(4, ped_g, x),
-            self.sign_u(5, ped_g, x),
-            self.sign_u(6, ped_g, x),
-            self.sign_u(7, ped_g, x),
-            self.sign_u(8, ped_g, x),
-            self.sign_u(9, ped_g, x),
+            sign_u(0, ped_g, x),
+            sign_u(1, ped_g, x),
+            sign_u(2, ped_g, x),
+            sign_u(3, ped_g, x),
+            sign_u(4, ped_g, x),
+            sign_u(5, ped_g, x),
+            sign_u(6, ped_g, x),
+            sign_u(7, ped_g, x),
+            sign_u(8, ped_g, x),
+            sign_u(9, ped_g, x),
         ]
-        str_num = self.num_to_str(value, 4)
+        str_num = num_to_str(value, 4)
 
         # Verifier selects V_j at random
         v_0 = group.random(ZR)
@@ -1495,3 +1499,4 @@ class SigmaProtocol:
             * ((ped_g ** ((10 ** 3) * z_s_3)))
         ):
             print("Abort: (FZK_PR) D check failed.")
+        return c , y
