@@ -9,13 +9,13 @@ Authors:
 """
 
 import json
+from collections import namedtuple
 
 from charm.core.engine.util import objectToBytes, bytesToObject
 from charm.toolbox.pairinggroup import PairingGroup, pair, ZR
 from charm.toolbox.integergroup import RSAGroup
 from charm.core.engine.util import serializeList
 from charm.core.math.integer import integer
-from collections import namedtuple
 
 from uuhd.jsonobjects import (
     ZKWitness,
@@ -40,6 +40,17 @@ def generate_n_random_exponents(n):
         exponents.append(pairing_group.random(ZR))
     return exponents
 
+    def num_to_str(self, num, length):
+        str_num = str(num)
+        if len(str_num) < length:
+            str_num = "0" * (length - len(str_num)) + str_num
+
+        return str_num
+
+
+def sign_u(self, i, g, x):
+    return g ** ((x + i) ** -1)
+
 
 class SigmaProtocol:
     def __init__(self, instance, pairing_group_string, keylength):
@@ -52,7 +63,7 @@ class SigmaProtocol:
 
         public_key = instance["pk"]
 
-        self.v, self.w1, self.w2, self.z, self.u1 = (
+        self.v, self.w_1, self.w_2, self.z, self.u_1 = (
             public_key["V"],
             public_key["W"][1],
             public_key["W"][2],
@@ -106,34 +117,34 @@ class SigmaProtocol:
 
         self.par_ic = self.integer_commitment.setup()
 
-    def compute_ppe_1(self, d1, d2, d3, d4, side):
+    def compute_ppe_1(self, d_1, d_2, d_3, d_4, side):
         if side == "lhs":
             return (
                 (pair(self.r_d, self.v) ** self.one)
                 * (pair(self.s_d, self.gt) ** self.one)
-                * (pair(self.vcomd, self.w1) ** self.one)
-                * (pair(self.comd, self.w2) ** self.one)
+                * (pair(self.vcomd, self.w_1) ** self.one)
+                * (pair(self.comd, self.w_2) ** self.one)
                 * (pair(self.g, self.z) ** -1)
             )
         else:
             return (
-                (pair(self.h, self.v) ** d1)
-                * (pair(self.h, self.gt) ** d2)
-                * (pair(self.g, self.w1) ** d3)
-                * (pair(self.ped_h, self.w2) ** d4)
+                (pair(self.h, self.v) ** d_1)
+                * (pair(self.h, self.gt) ** d_2)
+                * (pair(self.g, self.w_1) ** d_3)
+                * (pair(self.ped_h, self.w_2) ** d_4)
             )
 
-    def compute_ppe_2(self, d1, d5, side):
+    def compute_ppe_2(self, d_1, d_5, side):
         if side == "lhs":
             return (
                 (pair(self.r_d, self.t_d) ** self.one)
-                * (pair(self.u1, (self.gt ** self.sid)) ** self.one)
+                * (pair(self.u_1, (self.gt ** self.sid)) ** self.one)
                 * (pair(self.g, self.gt) ** -1)
-                * (pair(self.h, self.ht) ** (d1 * d5))
+                * (pair(self.h, self.ht) ** (d_1 * d_5))
             )
         else:
-            return (pair(self.r_d, self.ht) ** d5) * (
-                pair(self.h, self.t_d) ** d1
+            return (pair(self.r_d, self.ht) ** d_5) * (
+                pair(self.h, self.t_d) ** d_1
             )
 
     def compute_ppe_3(self, index, i, copen_i, side):
@@ -154,7 +165,7 @@ class SigmaProtocol:
                 pair(self.ped_h, self.gt) ** copen_ri
             )
 
-    def compute_ppe_5(self, index, di_1, di_2, i, side):
+    def compute_ppe_5(self, index, d_i_1, d_i_2, i, side):
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return (
@@ -165,12 +176,12 @@ class SigmaProtocol:
             )
         else:
             return (
-                (pair(self.h, self.v) ** di_1)
-                * (pair(self.h, self.gt) ** di_2)
+                (pair(self.h, self.v) ** d_i_1)
+                * (pair(self.h, self.gt) ** d_i_2)
                 * (pair(self.g, self.w1) ** -i)
             )
 
-    def compute_ppe_6(self, index, di_1, di_3, di_4, side):
+    def compute_ppe_6(self, index, d_i_1, d_i_3, d_i_4, side):
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return (
@@ -179,18 +190,18 @@ class SigmaProtocol:
                     ** self.one
                 )
                 * (pair(self.u1, record["phd_i"]) ** self.one)
-                * (pair(self.h, self.ht) ** (di_1 * di_3))
+                * (pair(self.h, self.ht) ** (d_i_1 * d_i_3))
                 * (pair(self.g, self.gt) ** -1)
             )
 
         else:
             return (
-                (pair(record["sig"]["R_id"], self.ht) ** di_3)
-                * (pair(self.h, record["sig"]["T_id"]) ** di_1)
-                * (pair(self.u1, self.ht) ** di_4)
+                (pair(record["sig"]["R_id"], self.ht) ** d_i_3)
+                * (pair(self.h, record["sig"]["T_id"]) ** d_i_1)
+                * (pair(self.u1, self.ht) ** d_i_4)
             )
 
-    def compute_ppe_7(self, index, di_4, di_5, vr, side):
+    def compute_ppe_7(self, index, d_i_4, d_i_5, vr, side):
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return (pair(self.vcomd, record["phd_i"]) ** 1) * (
@@ -198,8 +209,8 @@ class SigmaProtocol:
             )
         else:
             return (
-                (pair(self.vcomd, self.ht) ** di_4)
-                * (pair(self.h, self.gt) ** -di_5)
+                (pair(self.vcomd, self.ht) ** d_i_4)
+                * (pair(self.h, self.gt) ** -d_i_5)
                 * (
                     pair(
                         self.instance["par"]["par_g"][1],
@@ -211,56 +222,63 @@ class SigmaProtocol:
                 )
             )
 
-    def compute_s(self, random_witness, c, witness, random_ico, witness_ico):
+    def compute_s(
+        self,
+        random_witness,
+        c,
+        witness,
+        random_integer_openings,
+        witness_integer_openings,
+    ):
         s_j = ZKWitness()
         hashes_j = ZKWitness()
 
-        r1, r2, r3, r4, r5 = (
+        r_1, r_2, r_3, r_4, r_5 = (
             random_witness["d1"],
             random_witness["d2"],
             random_witness["d3"],
             random_witness["d4"],
             random_witness["d5"],
         )
-        r1h, r2h, r3h, r4h, r5h = (
-            integer(SHA256(bytes(str(r1), "utf-8"))),
-            integer(SHA256(bytes(str(r2), "utf-8"))),
-            integer(SHA256(bytes(str(r3), "utf-8"))),
-            integer(SHA256(bytes(str(r4), "utf-8"))),
-            integer(SHA256(bytes(str(r5), "utf-8"))),
+        hash_r_1, hash_r_2, hash_r_3, hash_r_4, hash_r_5 = (
+            integer(SHA256(bytes(str(r_1), "utf-8"))),
+            integer(SHA256(bytes(str(r_2), "utf-8"))),
+            integer(SHA256(bytes(str(r_3), "utf-8"))),
+            integer(SHA256(bytes(str(r_4), "utf-8"))),
+            integer(SHA256(bytes(str(r_5), "utf-8"))),
         )
 
-        d1, d2, d3, d4, d5 = (
+        d_1, d_2, d_3, d_4, d_5 = (
             witness["d1"],
             witness["d2"],
             witness["d3"],
             witness["d4"],
             witness["d5"],
         )
-        d1h, d2h, d3h, d4h, d5h = (
-            integer(SHA256(bytes(str(d1), "utf-8"))),
-            integer(SHA256(bytes(str(d2), "utf-8"))),
-            integer(SHA256(bytes(str(d3), "utf-8"))),
-            integer(SHA256(bytes(str(d4), "utf-8"))),
-            integer(SHA256(bytes(str(d5), "utf-8"))),
+        hash_d_1, hash_d_2, hash_d_3, hash_d_4, hash_d_5 = (
+            integer(SHA256(bytes(str(d_1), "utf-8"))),
+            integer(SHA256(bytes(str(d_2), "utf-8"))),
+            integer(SHA256(bytes(str(d_3), "utf-8"))),
+            integer(SHA256(bytes(str(d_4), "utf-8"))),
+            integer(SHA256(bytes(str(d_5), "utf-8"))),
         )
 
         hash_c = integer(SHA256(bytes(str(c), "utf-8")))
 
         s_j.set_d(
-            r1 + (c * d1),
-            r2 + (c * d2),
-            r3 + (c * d3),
-            r4 + (c * d4),
-            r5 + (c * d5),
+            r_1 + (c * d_1),
+            r_2 + (c * d_2),
+            r_3 + (c * d_3),
+            r_4 + (c * d_4),
+            r_5 + (c * d_5),
         )
 
         hashes_j.set_d(
-            r1h + (hash_c * d1h),
-            r2h + (hash_c * d2h),
-            r3h + (hash_c * d3h),
-            r4h + (hash_c * d4h),
-            r5h + (hash_c * d5h),
+            hash_r_1 + (hash_c * hash_d_1),
+            hash_r_2 + (hash_c * hash_d_2),
+            hash_r_3 + (hash_c * hash_d_3),
+            hash_r_4 + (hash_c * hash_d_4),
+            hash_r_5 + (hash_c * hash_d_5),
         )
 
         for subwitness in witness["wit_i"]:
@@ -268,7 +286,7 @@ class SigmaProtocol:
                 subwitness["index"], random_witness["wit_i"]
             )
 
-            di_1, di_2, di_3, di_4, di_5 = (
+            d_i_1, d_i_2, d_i_3, d_i_4, d_i_5 = (
                 subwitness["di_1"],
                 subwitness["di_2"],
                 subwitness["di_3"],
@@ -276,12 +294,12 @@ class SigmaProtocol:
                 subwitness["di_5"],
             )
 
-            di_1h, di_2h, di_3h, di_4h, di_5h = (
-                integer(SHA256(bytes(str(di_1), "utf-8"))),
-                integer(SHA256(bytes(str(di_2), "utf-8"))),
-                integer(SHA256(bytes(str(di_3), "utf-8"))),
-                integer(SHA256(bytes(str(di_4), "utf-8"))),
-                integer(SHA256(bytes(str(di_5), "utf-8"))),
+            hash_d_i_1, hash_d_i_2, hash_d_i_3, hash_d_i_4, hash_d_i_5 = (
+                integer(SHA256(bytes(str(d_i_1), "utf-8"))),
+                integer(SHA256(bytes(str(d_i_2), "utf-8"))),
+                integer(SHA256(bytes(str(d_i_3), "utf-8"))),
+                integer(SHA256(bytes(str(d_i_4), "utf-8"))),
+                integer(SHA256(bytes(str(d_i_5), "utf-8"))),
             )
 
             i, vr, copen_i, copen_ri = (
@@ -291,14 +309,14 @@ class SigmaProtocol:
                 subwitness["copen_ri"],
             )
 
-            ih, vrh, copen_ih, copen_rih = (
+            hash_i, hash_vr, hash_copen_i, hash_copen_ri = (
                 integer(subwitness["i"]),
                 integer(subwitness["vr"]),
                 integer(SHA256(bytes(str(subwitness["copen_i"]), "utf-8"))),
                 integer(SHA256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
             )
 
-            rdi_1, rdi_2, rdi_3, rdi_4, rdi_5 = (
+            r_i_1, r_i_2, r_i_3, r_i_4, r_i_5 = (
                 random_subwitness_record["di_1"],
                 random_subwitness_record["di_2"],
                 random_subwitness_record["di_3"],
@@ -306,14 +324,14 @@ class SigmaProtocol:
                 random_subwitness_record["di_5"],
             )
 
-            ri, rvr, rcopen_i, rcopen_ri = (
+            random_i, random_vr, random_copen_i, random_copen_ri = (
                 random_subwitness_record["i"],
                 random_subwitness_record["vr"],
                 random_subwitness_record["copen_i"],
                 random_subwitness_record["copen_ri"],
             )
 
-            rdi_1h, rdi_2h, rdi_3h, rdi_4h, rdi_5h = (
+            hash_r_i_1, hash_r_i_2, hash_r_i_3, hash_r_i_4, hash_r_i_5 = (
                 integer(
                     SHA256(
                         bytes(str(random_subwitness_record["di_1"]), "utf-8")
@@ -341,7 +359,7 @@ class SigmaProtocol:
                 ),
             )
 
-            rih, rvrh, rcopen_ih, rcopen_rih = (
+            hash_random_i, hash_random_vr, hash_random_copen_i, hash_random_copen_ri = (
                 integer(
                     SHA256(bytes(str(random_subwitness_record["i"]), "utf-8"))
                 ),
@@ -366,28 +384,28 @@ class SigmaProtocol:
 
             temp_s_j_i = SubWitnessRecord(
                 subwitness["index"],
-                ri + (c * i),
-                rvr + (c * vr),
-                rcopen_i + (c * copen_i),
-                rcopen_ri + (c * copen_ri),
-                rdi_1 + (c * di_1),
-                rdi_2 + (c * di_2),
-                rdi_3 + (c * di_3),
-                rdi_4 + (c * di_4),
-                rdi_5 + (c * di_5),
+                random_i + (c * i),
+                random_vr + (c * vr),
+                random_copen_i + (c * copen_i),
+                random_copen_ri + (c * copen_ri),
+                r_i_1 + (c * d_i_1),
+                r_i_2 + (c * d_i_2),
+                r_i_3 + (c * d_i_3),
+                r_i_4 + (c * d_i_4),
+                r_i_5 + (c * d_i_5),
             )
 
             temp_hashes_j_i = SubWitnessRecord(
                 subwitness["index"],
-                rih + (hash_c * ih),
-                rvrh + (hash_c * vrh),
-                rcopen_ih + (hash_c * copen_ih),
-                rcopen_rih + (hash_c * copen_rih),
-                rdi_1h + (hash_c * di_1h),
-                rdi_2h + (hash_c * di_2h),
-                rdi_3h + (hash_c * di_3h),
-                rdi_4h + (hash_c * di_4h),
-                rdi_5h + (hash_c * di_5h),
+                hash_random_i + (hash_c * hash_i),
+                hash_random_vr + (hash_c * hash_vr),
+                hash_random_copen_i + (hash_c * hash_copen_i),
+                hash_random_copen_ri + (hash_c * hash_copen_ri),
+                hash_r_i_1 + (hash_c * hash_d_i_1),
+                hash_r_i_2 + (hash_c * hash_d_i_2),
+                hash_r_i_3 + (hash_c * hash_d_i_3),
+                hash_r_i_4 + (hash_c * hash_d_i_4),
+                hash_r_i_5 + (hash_c * hash_d_i_5),
             )
 
             s_j.append_subwitnesses(temp_s_j_i)
@@ -395,97 +413,107 @@ class SigmaProtocol:
 
         s_o_j = ZKWitness()
 
-        ro1, ro2, ro3, ro4, ro5 = (
-            random_ico["d1"],
-            random_ico["d2"],
-            random_ico["d3"],
-            random_ico["d4"],
-            random_ico["d5"],
+        random_opening_1, random_opening_2, random_opening_3, random_opening_4, random_opening_5 = (
+            random_integer_openings["d1"],
+            random_integer_openings["d2"],
+            random_integer_openings["d3"],
+            random_integer_openings["d4"],
+            random_integer_openings["d5"],
         )
-        do1, do2, do3, do4, do5 = (
-            witness_ico["d1"],
-            witness_ico["d2"],
-            witness_ico["d3"],
-            witness_ico["d4"],
-            witness_ico["d5"],
+        opening_1, opening_2, opening_3, opening_4, opening_5 = (
+            witness_integer_openings["d1"],
+            witness_integer_openings["d2"],
+            witness_integer_openings["d3"],
+            witness_integer_openings["d4"],
+            witness_integer_openings["d5"],
         )
 
         s_o_j.set_d(
-            ro1 + (hash_c * do1),
-            ro2 + (hash_c * do2),
-            ro3 + (hash_c * do3),
-            ro4 + (hash_c * do4),
-            ro5 + (hash_c * do5),
+            random_opening_1 + (hash_c * opening_1),
+            random_opening_2 + (hash_c * opening_2),
+            random_opening_3 + (hash_c * opening_3),
+            random_opening_4 + (hash_c * opening_4),
+            random_opening_5 + (hash_c * opening_5),
         )
 
-        for subwitness_ico_record in witness_ico["wit_i"]:
-            random_ico_record = get_record_by_index(
-                subwitness_ico_record["index"], random_ico["wit_i"]
+        for subwitness_integer_opening_record in witness_integer_openings[
+            "wit_i"
+        ]:
+            random_integer_opening_record = get_record_by_index(
+                subwitness_integer_opening_record["index"],
+                random_integer_openings["wit_i"],
             )
 
-            di_1, di_2, di_3, di_4, di_5 = (
-                subwitness_ico_record["di_1"],
-                subwitness_ico_record["di_2"],
-                subwitness_ico_record["di_3"],
-                subwitness_ico_record["di_4"],
-                subwitness_ico_record["di_5"],
+            d_i_1, d_i_2, d_i_3, d_i_4, d_i_5 = (
+                subwitness_integer_opening_record["di_1"],
+                subwitness_integer_opening_record["di_2"],
+                subwitness_integer_opening_record["di_3"],
+                subwitness_integer_opening_record["di_4"],
+                subwitness_integer_opening_record["di_5"],
             )
 
             i, vr, copen_i, copen_ri = (
-                subwitness_ico_record["i"],
-                subwitness_ico_record["vr"],
-                subwitness_ico_record["copen_i"],
-                subwitness_ico_record["copen_ri"],
+                subwitness_integer_opening_record["i"],
+                subwitness_integer_opening_record["vr"],
+                subwitness_integer_opening_record["copen_i"],
+                subwitness_integer_opening_record["copen_ri"],
             )
 
-            rdi_1, rdi_2, rdi_3, rdi_4, rdi_5 = (
-                random_ico_record["di_1"],
-                random_ico_record["di_2"],
-                random_ico_record["di_3"],
-                random_ico_record["di_4"],
-                random_ico_record["di_5"],
+            r_i_1, r_i_2, r_i_3, r_i_4, r_i_5 = (
+                random_integer_opening_record["di_1"],
+                random_integer_opening_record["di_2"],
+                random_integer_opening_record["di_3"],
+                random_integer_opening_record["di_4"],
+                random_integer_opening_record["di_5"],
             )
 
-            ri, rvr, rcopen_i, rcopen_ri = (
-                random_ico_record["i"],
-                random_ico_record["vr"],
-                random_ico_record["copen_i"],
-                random_ico_record["copen_ri"],
+            random_i, random_vr, random_copen_i, random_copen_ri = (
+                random_integer_opening_record["i"],
+                random_integer_opening_record["vr"],
+                random_integer_opening_record["copen_i"],
+                random_integer_opening_record["copen_ri"],
             )
 
             temp_s_j_i = SubWitnessRecord(
-                subwitness_ico_record["index"],
-                ri + (hash_c * i),
-                rvr + (hash_c * vr),
-                rcopen_i + (hash_c * copen_i),
-                rcopen_ri + (hash_c * copen_ri),
-                rdi_1 + (hash_c * di_1),
-                rdi_2 + (hash_c * di_2),
-                rdi_3 + (hash_c * di_3),
-                rdi_4 + (hash_c * di_4),
-                rdi_5 + (hash_c * di_5),
+                subwitness_integer_opening_record["index"],
+                random_i + (hash_c * i),
+                random_vr + (hash_c * vr),
+                random_copen_i + (hash_c * copen_i),
+                random_copen_ri + (hash_c * copen_ri),
+                r_i_1 + (hash_c * d_i_1),
+                r_i_2 + (hash_c * d_i_2),
+                r_i_3 + (hash_c * d_i_3),
+                r_i_4 + (hash_c * d_i_4),
+                r_i_5 + (hash_c * d_i_5),
             )
             s_o_j.append_subwitnesses(temp_s_j_i)
 
         return s_j, hashes_j, hash_c
 
-    def pe_check(self, index, hashes_j, random_pe, witness_pe, hash_c):
+    def pe_check(
+        self,
+        index,
+        hashes_j,
+        random_paillier_ciphertexts,
+        witness_paillier_ciphertexts,
+        hash_c,
+    ):
         g, n, n2 = (
             self.public_key["g"],
             self.public_key["n"],
             self.public_key["n2"],
         )
-        temp_pe = {
-            "c": random_pe[index][0]["c"]
-            * (witness_pe[index][0]["c"] ** hash_c)
+        temp_paillier_ciphertext = {
+            "c": random_paillier_ciphertexts[index][0]["c"]
+            * (witness_paillier_ciphertexts[index][0]["c"] ** hash_c)
         }
-        return (temp_pe["c"] % n2) == (
+        return (temp_paillier_ciphertext["c"] % n2) == (
             (
                 ((g % n2) ** (hashes_j[index]))
                 * (
                     (
-                        random_pe[index][1]
-                        * (witness_pe[index][1] ** hash_c)
+                        random_paillier_ciphertexts[index][1]
+                        * (witness_paillier_ciphertexts[index][1] ** hash_c)
                         % n2
                     )
                     ** n
@@ -495,7 +523,13 @@ class SigmaProtocol:
         )
 
     def pe_sub_check(
-        self, subindex, index, hashes_j, random_pe, witness_pe, hash_c
+        self,
+        subindex,
+        index,
+        hashes_j,
+        random_paillier_ciphertexts,
+        witness_paillier_ciphertexts,
+        hash_c,
     ):
 
         g, n, n2 = (
@@ -504,20 +538,24 @@ class SigmaProtocol:
             self.public_key["n2"],
         )
 
-        random_record = get_record_by_index(subindex, random_pe["wit_i"])
-        witness_record = get_record_by_index(subindex, witness_pe["wit_i"])
+        random_ciphertext_record = get_record_by_index(
+            subindex, random_paillier_ciphertexts["wit_i"]
+        )
+        witness_ciphertext_record = get_record_by_index(
+            subindex, witness_paillier_ciphertexts["wit_i"]
+        )
         hash_record = get_record_by_index(subindex, hashes_j["wit_i"])
-        temp_pe = {
-            "c": random_record[index][0]["c"]
-            * (witness_record[index][0]["c"] ** hash_c)
+        temp_paillier_ciphertext = {
+            "c": random_ciphertext_record[index][0]["c"]
+            * (witness_ciphertext_record[index][0]["c"] ** hash_c)
         }
-        return (temp_pe["c"] % n2) == (
+        return (temp_paillier_ciphertext["c"] % n2) == (
             (
                 ((g % n2) ** (hash_record[index]))
                 * (
                     (
-                        random_record[index][1]
-                        * (witness_record[index][1] ** hash_c)
+                        random_ciphertext_record[index][1]
+                        * (witness_ciphertext_record[index][1] ** hash_c)
                         % n2
                     )
                     ** n
@@ -959,7 +997,7 @@ class SigmaProtocol:
         return 1
 
     def prepare_paillier_ciphertexts(self, witness, is_random=0):
-        d1, d2, d3, d4, d5 = (
+        d_1, d_2, d_3, d_4, d_5 = (
             witness["d1"],
             witness["d2"],
             witness["d3"],
@@ -968,90 +1006,90 @@ class SigmaProtocol:
         )
 
         paillier_ciphertexts = ZKWitness()
-        d1c = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d1), "utf-8")))
+        ciphertext_d_1 = self.paillier_encryption.encrypt(
+            self.public_key, integer(SHA256(bytes(str(d_1), "utf-8")))
         )
-        d2c = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d2), "utf-8")))
+        ciphertext_d_2 = self.paillier_encryption.encrypt(
+            self.public_key, integer(SHA256(bytes(str(d_2), "utf-8")))
         )
-        d3c = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d3), "utf-8")))
+        ciphertext_d_3 = self.paillier_encryption.encrypt(
+            self.public_key, integer(SHA256(bytes(str(d_3), "utf-8")))
         )
-        d4c = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d4), "utf-8")))
+        ciphertext_d_4 = self.paillier_encryption.encrypt(
+            self.public_key, integer(SHA256(bytes(str(d_4), "utf-8")))
         )
-        d5c = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d5), "utf-8")))
+        ciphertext_d_5 = self.paillier_encryption.encrypt(
+            self.public_key, integer(SHA256(bytes(str(d_5), "utf-8")))
         )
         paillier_ciphertexts.set_d(
-            d1c,
-            d2c,
-            d3c,
-            d4c,
-            d5c,
+            ciphertext_d_1,
+            ciphertext_d_2,
+            ciphertext_d_3,
+            ciphertext_d_4,
+            ciphertext_d_5,
         )
 
         for subwitness in witness["wit_i"]:
             #
-            [di_1, di_2, di_3, di_4, di_5] = (
+            [d_i_1, di_2, d_i_3, d_i_4, d_i_5] = (
                 subwitness["di_1"],
                 subwitness["di_2"],
                 subwitness["di_3"],
                 subwitness["di_4"],
                 subwitness["di_5"],
             )
-            di_1c = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(di_1), "utf-8")))
+            ciphertext_d_i_1 = self.paillier_encryption.encrypt(
+                self.public_key, integer(SHA256(bytes(str(d_i_1), "utf-8")))
             )
-            di_2c = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(di_2), "utf-8")))
+            ciphertext_d_i_2 = self.paillier_encryption.encrypt(
+                self.public_key, integer(SHA256(bytes(str(d_i_2), "utf-8")))
             )
-            di_3c = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(di_3), "utf-8")))
+            ciphertext_d_i_3 = self.paillier_encryption.encrypt(
+                self.public_key, integer(SHA256(bytes(str(d_i_3), "utf-8")))
             )
-            di_4c = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(di_4), "utf-8")))
+            ciphertext_d_i_4 = self.paillier_encryption.encrypt(
+                self.public_key, integer(SHA256(bytes(str(d_i_4), "utf-8")))
             )
-            di_5c = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(di_5), "utf-8")))
+            ciphertext_d_i_5 = self.paillier_encryption.encrypt(
+                self.public_key, integer(SHA256(bytes(str(d_i_5), "utf-8")))
             )
             if is_random:
-                ic = self.paillier_encryption.encrypt(
+                ciphertext_i = self.paillier_encryption.encrypt(
                     self.public_key,
                     integer(SHA256(bytes(str(subwitness["i"]), "utf-8"))),
                 )
-                vrc = self.paillier_encryption.encrypt(
+                ciphertext_vr = self.paillier_encryption.encrypt(
                     self.public_key,
                     integer(SHA256(bytes(str(subwitness["vr"]), "utf-8"))),
                 )
 
             else:
-                ic = self.paillier_encryption.encrypt(
+                ciphertext_i = self.paillier_encryption.encrypt(
                     self.public_key, integer(subwitness["i"])
                 )
-                vrc = self.paillier_encryption.encrypt(
+                ciphertext_vr = self.paillier_encryption.encrypt(
                     self.public_key, integer(subwitness["vr"])
                 )
 
-            ico = self.paillier_encryption.encrypt(
+            ciphertext_copen_i = self.paillier_encryption.encrypt(
                 self.public_key,
                 integer(SHA256(bytes(str(subwitness["copen_i"]), "utf-8"))),
             )
-            vrco = self.paillier_encryption.encrypt(
+            ciphertext_copen_ri = self.paillier_encryption.encrypt(
                 self.public_key,
                 integer(SHA256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
             )
             temp_sw_paillier_ciphertexts = SubWitnessRecord(
                 subwitness["index"],
-                ic,
-                vrc,
-                ico,
-                vrco,
-                di_1c,
-                di_2c,
-                di_3c,
-                di_4c,
-                di_5c,
+                ciphertext_i,
+                ciphertext_vr,
+                ciphertext_copen_i,
+                ciphertext_copen_ri,
+                ciphertext_d_i_1,
+                ciphertext_d_i_2,
+                ciphertext_d_i_3,
+                ciphertext_d_i_4,
+                ciphertext_d_i_5,
             )
             paillier_ciphertexts.append_subwitnesses(
                 temp_sw_paillier_ciphertexts
@@ -1060,7 +1098,7 @@ class SigmaProtocol:
         return paillier_ciphertexts
 
     def prepare_integer_commitments(self, witness, is_random=0):
-        d1, d2, d3, d4, d5 = (
+        d_1, d_2, d_3, d_4, d_5 = (
             witness["d1"],
             witness["d2"],
             witness["d3"],
@@ -1071,103 +1109,114 @@ class SigmaProtocol:
         integer_commitments = ZKWitness()
         integer_openings = ZKWitness()
 
-        d1c = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d1), "utf-8")))
+        commitment_d_1 = self.integer_commitment.commit(
+            self.par_ic, integer(SHA256(bytes(str(d_1), "utf-8")))
         )
-        d2c = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d2), "utf-8")))
+        commitment_d_2 = self.integer_commitment.commit(
+            self.par_ic, integer(SHA256(bytes(str(d_2), "utf-8")))
         )
-        d3c = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d3), "utf-8")))
+        commitment_d_3 = self.integer_commitment.commit(
+            self.par_ic, integer(SHA256(bytes(str(d_3), "utf-8")))
         )
-        d4c = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d4), "utf-8")))
+        commitment_d_4 = self.integer_commitment.commit(
+            self.par_ic, integer(SHA256(bytes(str(d_4), "utf-8")))
         )
-        d5c = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d5), "utf-8")))
+        commitment_d_5 = self.integer_commitment.commit(
+            self.par_ic, integer(SHA256(bytes(str(d_5), "utf-8")))
         )
+
         integer_commitments.set_d(
-            d1c[0],
-            d2c[0],
-            d3c[0],
-            d4c[0],
-            d5c[0],
+            commitment_d_1[0],
+            commitment_d_2[0],
+            commitment_d_3[0],
+            commitment_d_4[0],
+            commitment_d_5[0],
         )
-        integer_openings.set_d(d1c[1], d2c[1], d3c[1], d4c[1], d5c[1])
+
+        integer_openings.set_d(
+            commitment_d_1[1],
+            commitment_d_2[1],
+            commitment_d_3[1],
+            commitment_d_4[1],
+            commitment_d_5[1],
+        )
         for subwitness in witness["wit_i"]:
             #
-            [di_1, di_2, di_3, di_4, di_5] = (
+            [d_i_1, d_i_2, d_i_3, d_i_4, d_i_5] = (
                 subwitness["di_1"],
                 subwitness["di_2"],
                 subwitness["di_3"],
                 subwitness["di_4"],
                 subwitness["di_5"],
             )
-            di_1c = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(di_1), "utf-8")))
+            ciphertext_d_i_1 = self.integer_commitment.commit(
+                self.par_ic, integer(SHA256(bytes(str(d_i_1), "utf-8")))
             )
-            di_2c = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(di_2), "utf-8")))
+            ciphertext_d_i_2 = self.integer_commitment.commit(
+                self.par_ic, integer(SHA256(bytes(str(d_i_2), "utf-8")))
             )
-            di_3c = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(di_3), "utf-8")))
+            ciphertext_d_i_3 = self.integer_commitment.commit(
+                self.par_ic, integer(SHA256(bytes(str(d_i_3), "utf-8")))
             )
-            di_4c = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(di_4), "utf-8")))
+            ciphertext_d_i_4 = self.integer_commitment.commit(
+                self.par_ic, integer(SHA256(bytes(str(d_i_4), "utf-8")))
             )
-            di_5c = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(di_5), "utf-8")))
+            ciphertext_d_i_5 = self.integer_commitment.commit(
+                self.par_ic, integer(SHA256(bytes(str(d_i_5), "utf-8")))
             )
             if is_random:
-                ic = self.integer_commitment.commit(
+                commitment_i = self.integer_commitment.commit(
                     self.par_ic,
                     integer(SHA256(bytes(str(subwitness["i"]), "utf-8"))),
                 )
-                vrc = self.integer_commitment.commit(
+                commitment_vr = self.integer_commitment.commit(
                     self.par_ic,
                     integer(SHA256(bytes(str(subwitness["vr"]), "utf-8"))),
                 )
 
             else:
-                ic = self.integer_commitment.commit(
+                commitment_i = self.integer_commitment.commit(
                     self.par_ic, integer(subwitness["i"])
                 )
-                vrc = self.integer_commitment.commit(
+                commitment_vr = self.integer_commitment.commit(
                     self.par_ic, integer(subwitness["vr"])
                 )
 
-            ico = self.integer_commitment.commit(
+            commitment_copen_i = self.integer_commitment.commit(
                 self.par_ic,
                 integer(SHA256(bytes(str(subwitness["copen_i"]), "utf-8"))),
             )
-            vrco = self.integer_commitment.commit(
+            commitment_copen_ri = self.integer_commitment.commit(
                 self.par_ic,
                 integer(SHA256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
             )
+
             temp_sw_integer_commitments = SubWitnessRecord(
                 subwitness["index"],
-                ic[0],
-                vrc[0],
-                ico[0],
-                vrco[0],
-                di_1c[0],
-                di_2c[0],
-                di_3c[0],
-                di_4c[0],
-                di_5c[0],
+                commitment_i[0],
+                commitment_vr[0],
+                commitment_copen_i[0],
+                commitment_copen_ri[0],
+                commitment_d_i_1[0],
+                commitment_d_i_2[0],
+                commitment_d_i_3[0],
+                commitment_d_i_4[0],
+                commitment_d_i_5[0],
             )
+
             temp_sw_integer_openings = SubWitnessRecord(
                 subwitness["index"],
-                ic[1],
-                vrc[1],
-                ico[1],
-                vrco[1],
-                di_1c[1],
-                di_2c[1],
-                di_3c[1],
-                di_4c[1],
-                di_5c[1],
+                commitment_i[1],
+                commitment_vr[1],
+                commitment_copen_i[1],
+                commitment_copen_ri[1],
+                commitment_d_i_1[1],
+                commitment_d_i_2[1],
+                commitment_d_i_3[1],
+                commitment_d_i_4[1],
+                commitment_d_i_5[1],
             )
+
             integer_commitments.append_subwitnesses(
                 temp_sw_integer_commitments
             )
@@ -1175,15 +1224,22 @@ class SigmaProtocol:
         return integer_commitments, integer_openings
 
     def prover_step_2(
-        self, random_witness, c, witness, random_ico, witness_ico
+        self,
+        random_witness,
+        c,
+        witness,
+        random_integer_openings,
+        witness_integer_openings,
     ):
         return self.compute_s(
-            random_witness, c, witness, random_ico, witness_ico
+            random_witness,
+            c,
+            witness,
+            random_integer_openings,
+            witness_integer_openings,
         )
 
-    def verifier_step_1(
-        self,
-    ):
+    def verifier_step_1(self,):
         return pairing_group.random(ZR)
 
     def verifier_step_2(
@@ -1225,16 +1281,16 @@ class SigmaProtocol:
 
     def prepare_random_witnesses(self, witness):
         random_witnesses = ZKWitness()
-        [r1, r2, r3, r4, r5] = generate_n_random_exponents(5)
-        random_witnesses.set_d(r1, r2, r3, r4, r5)
+        [r_1, r_2, r_3, r_4, r_5] = generate_n_random_exponents(5)
+        random_witnesses.set_d(r_1, r_2, r_3, r_4, r_5)
         for subwitness in witness["wit_i"]:
             #
             [
-                di_1,
-                di_2,
-                di_3,
-                di_4,
-                di_5,
+                d_i_1,
+                d_i_2,
+                d_i_3,
+                d_i_4,
+                d_i_5,
                 i,
                 vr,
                 copen_i,
@@ -1246,49 +1302,49 @@ class SigmaProtocol:
                 vr,
                 copen_i,
                 copen_ri,
-                di_1,
-                di_2,
-                di_3,
-                di_4,
-                di_5,
+                d_i_1,
+                d_i_2,
+                d_i_3,
+                d_i_4,
+                d_i_5,
             )
             random_witnesses.append_subwitnesses(temp_random_witnesses)
         return random_witnesses
 
     def compute_t(self, random_witness):
 
-        d1, d2, d3, d4, d5 = (
+        d_1, d_2, d_3, d_4, d_5 = (
             random_witness["d1"],
             random_witness["d2"],
             random_witness["d3"],
             random_witness["d4"],
             random_witness["d5"],
         )
-        t1 = self.compute_ppe_1(d1, d2, d3, d4, "rhs")
-        t2 = self.compute_ppe_2(d1, d5, "rhs")
+        t_1 = self.compute_ppe_1(d_1, d_2, d_3, d_4, "rhs")
+        t_2 = self.compute_ppe_2(d_1, d_5, "rhs")
         t_i = []
         for record in random_witness["wit_i"]:
-            t3 = self.compute_ppe_3(
+            t_3 = self.compute_ppe_3(
                 record["index"], record["i"], record["copen_i"], "rhs"
             )
-            t4 = self.compute_ppe_4(
+            t_4 = self.compute_ppe_4(
                 record["index"], record["vr"], record["copen_ri"], "rhs"
             )
-            t5 = self.compute_ppe_5(
+            t_5 = self.compute_ppe_5(
                 record["index"],
                 record["di_1"],
                 record["di_2"],
                 record["i"],
                 "rhs",
             )
-            t6 = self.compute_ppe_6(
+            t_6 = self.compute_ppe_6(
                 record["index"],
                 record["di_1"],
                 record["di_3"],
                 record["di_4"],
                 "rhs",
             )
-            t7 = self.compute_ppe_7(
+            t_7 = self.compute_ppe_7(
                 record["index"],
                 record["di_4"],
                 record["di_5"],
@@ -1297,18 +1353,145 @@ class SigmaProtocol:
             )
             temp_t_i = {
                 "index": record["index"],
-                "t3": t3,
-                "t4": t4,
-                "t5": t5,
-                "t6": t6,
-                "t7": t7,
+                "t3": t_3,
+                "t4": t_4,
+                "t5": t_5,
+                "t6": t_6,
+                "t7": t_7,
             }
             t_i.append(temp_t_i)
-        tj = {"t1": t1, "t2": t2, "t_i": t_i}
-        return tj
+
+        return {"t1": t_1, "t2": t_2, "t_i": t_i}
 
     def prepare_random_integer_commitments(self, random_witness):
         return self.prepare_integer_commitments(random_witness, 1)
 
     def prepare_random_paillier_ciphertexts(self, random_witness):
         return self.prepare_paillier_ciphertexts(random_witness, 1)
+
+    def range_proof(value, commitment, opening, limit, ped_g, ped_h, group):
+        # Verifier picks x rand
+        x = group.random(ZR)
+        y = ped_h ** x
+        u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        a_i = [
+            self.sign_u(0, ped_g, x),
+            self.sign_u(1, ped_g, x),
+            self.sign_u(2, ped_g, x),
+            self.sign_u(3, ped_g, x),
+            self.sign_u(4, ped_g, x),
+            self.sign_u(5, ped_g, x),
+            self.sign_u(6, ped_g, x),
+            self.sign_u(7, ped_g, x),
+            self.sign_u(8, ped_g, x),
+            self.sign_u(9, ped_g, x),
+        ]
+        str_num = self.num_to_str(value, 4)
+
+        # Verifier selects V_j at random
+        v_0 = group.random(ZR)
+        v_1 = group.random(ZR)
+        v_2 = group.random(ZR)
+        v_3 = group.random(ZR)
+
+        v_j = [
+            a_i[int(str_num[3])] ** v_0,
+            a_i[int(str_num[2])] ** v_1,
+            a_i[int(str_num[1])] ** v_2,
+            a_i[int(str_num[0])] ** v_3,
+        ]
+
+        # v_j = [a_i[0]**v0,a_i[0]**v1,a_i[1]**v2,a_i[0]**v3]
+
+        # Prover
+        s_0 = group.random(ZR)
+        t_0 = group.random(ZR)
+        m_0 = group.random(ZR)
+
+        s_1 = group.random(ZR)
+        t_1 = group.random(ZR)
+        m_1 = group.random(ZR)
+
+        s_2 = group.random(ZR)
+        t_2 = group.random(ZR)
+        m_2 = group.random(ZR)
+
+        s_3 = group.random(ZR)
+        t_3 = group.random(ZR)
+        m_3 = group.random(ZR)
+
+        gt = group.random(G2)
+
+        a_0 = (pair(v_j[0], gt) ** (-s_0)) * (pair(ped_g, gt) ** t_0)
+        a_1 = (pair(v_j[1], gt) ** (-s_1)) * (pair(ped_g, gt) ** t_1)
+        a_2 = (pair(v_j[2], gt) ** (-s_2)) * (pair(ped_g, gt) ** t_2)
+        a_3 = (pair(v_j[3], gt) ** (-s_3)) * (pair(ped_g, gt) ** t_3)
+
+        d = (
+            ((ped_g ** ((10 ** 0) * s_0)) * (ped_h ** m_0))
+            * ((ped_g ** ((10 ** 1) * s_1)) * (ped_h ** m_1))
+            * ((ped_g ** ((10 ** 2) * s_2)) * (ped_h ** m_2))
+            * ((ped_g ** ((10 ** 3) * s_3)) * (ped_h ** m_3))
+        )
+
+        # Verifier picks a random challenge c
+        c = group.random(ZR)
+
+        # Prover does the following
+        z_s_0 = s_0 - (int(str_num[3]) * c)
+        z_v_0 = t_0 - (v_0 * c)
+        z_r_0 = m_0 - (opening * c)
+
+        z_s_1 = s_1 - (int(str_num[2]) * c)
+        z_v_1 = t_1 - (v_1 * c)
+        z_r_1 = m_1 - (opening * c)
+
+        z_s_2 = s_2 - (int(str_num[1]) * c)
+        z_v_2 = t_2 - (v_2 * c)
+        z_r_2 = m_2 - (opening * c)
+
+        z_s_3 = s_3 - (int(str_num[0]) * c)
+        z_v_3 = t_3 - (v_3 * c)
+        z_r_3 = m_3 - (opening * c)
+        y = gt ** x
+        z_r = (m_0 + m_1 + m_2 + m_3) - (opening * c)
+        if not (
+            a_0
+            == (pair(v_j[0], y) ** c)
+            * (pair(v_j[0], gt) ** -z_s_0)
+            * (pair(ped_g, gt) ** z_v_0)
+        ):
+            print("Abort: (FZK_PR) A0 check failed.")
+        if not (
+            a_1
+            == (pair(v_j[1], y) ** c)
+            * (pair(v_j[1], gt) ** -z_s_1)
+            * (pair(ped_g, gt) ** z_v_1)
+        ):
+            print("Abort: (FZK_PR) A1 check failed.")
+        if not (
+            a_2
+            == (pair(v_j[2], y) ** c)
+            * (pair(v_j[2], gt) ** -z_s_2)
+            * (pair(ped_g, gt) ** z_v_2)
+        ):
+            print("Abort: (FZK_PR) A2 check failed.")
+        if not (
+            a_3
+            == (pair(v_j[3], y) ** c)
+            * (pair(v_j[3], gt) ** -z_s_3)
+            * (pair(ped_g, gt) ** z_v_3)
+        ):
+            print("Abort: (FZK_PR) A3 check failed.")
+        if not (
+            d
+            == (commitment ** c)
+            * (~(ped_g ** (limit * c)))
+            * (ped_h ** (z_r))
+            * ((ped_g ** ((10 ** 0) * z_s_0)))
+            * ((ped_g ** ((10 ** 1) * z_s_1)))
+            * ((ped_g ** ((10 ** 2) * z_s_2)))
+            * ((ped_g ** ((10 ** 3) * z_s_3)))
+        ):
+            print("Abort: (FZK_PR) D check failed.")

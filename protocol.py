@@ -435,8 +435,9 @@ class Reader:
             )
             blinded_instance.append_subinstances(temp_blinded_instance_record)
             index = index + 1
-        return dict_from_class(blinded_instance), dict_from_class(
-            blinded_witness
+        return (
+            dict_from_class(blinded_instance),
+            dict_from_class(blinded_witness),
         )
 
     def test_witness_update(self, sid, p, i_list):

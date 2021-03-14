@@ -14,9 +14,15 @@ from charm.toolbox.pairinggroup import ZR, G1, G2, pair
 from charm.toolbox.integergroup import RSAGroup
 from charm.core.math.integer import integer
 
-from uuhd.sigmaprotocol import SigmaProtocol, get_record_by_index
+
 from uuhd.jsonobjects import dict_from_class
 from uuhd.primitives import PaillierEncryption, SHA256, DSA, IntegerCommitment
+from uuhd.sigmaprotocol import (
+    SigmaProtocol,
+    get_record_by_index,
+    num_to_str,
+    sign_u,
+)
 
 
 class WeakReference:
@@ -201,11 +207,7 @@ class FZK:
         ) * (sigma_protocol.dsa_keys[0]["y"] ** gd)
         dsa_c = (gd ** dsa_b) * (tag ** integer(hash_y))
 
-        r = {
-            "rj": random_witness,
-            "rco": random_ic,
-            "wco": witness_ic,
-        }
+        r = {"rj": random_witness, "rco": random_ic, "wco": witness_ic}
 
         s_j, hashes_j, hash_c = sigma_protocol.prover_step_2(
             dict_from_class(random_witness),
@@ -259,15 +261,6 @@ class FZK_RD:
         self.f_nym = f_nym
         self.keylength = keylength
 
-    def sign_u(self, i, g, x):
-        return g ** ((x + i) ** -1)
-
-    def num_to_str(self, num, length):
-        str_num = str(num)
-        if len(str_num) < length:
-            str_num = "0" * (length - len(str_num)) + str_num
-        return str_num
-
     def prove(self, sid, witness_rd, instance_rd, id, par_c, group):
 
         [v_n, open_v_n] = witness_rd["Vn"], witness_rd["openVn"]
@@ -288,127 +281,9 @@ class FZK_RD:
         (self.public_key, self.secret_key) = self.paillier_encryption.keygen(
             self.keylength
         )
-
-        # Verifier picks x rand
-        x = group.random(ZR)
-        y = ped_h ** x
-
-        u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-        a_i = [
-            self.sign_u(0, ped_g, x),
-            self.sign_u(1, ped_g, x),
-            self.sign_u(2, ped_g, x),
-            self.sign_u(3, ped_g, x),
-            self.sign_u(4, ped_g, x),
-            self.sign_u(5, ped_g, x),
-            self.sign_u(6, ped_g, x),
-            self.sign_u(7, ped_g, x),
-            self.sign_u(8, ped_g, x),
-            self.sign_u(9, ped_g, x),
-        ]
-
-        str_num = self.num_to_str(v_n - points, 4)
-
-        v_0 = group.random(ZR)
-        v_1 = group.random(ZR)
-        v_2 = group.random(ZR)
-        v_3 = group.random(ZR)
-
-        v_j = [
-            a_i[int(str_num[3])] ** v_0,
-            a_i[int(str_num[2])] ** v_1,
-            a_i[int(str_num[1])] ** v_2,
-            a_i[int(str_num[0])] ** v_3,
-        ]
-
-        s_0 = group.random(ZR)
-        t_0 = group.random(ZR)
-        m_0 = group.random(ZR)
-
-        s_1 = group.random(ZR)
-        t_1 = group.random(ZR)
-        m_1 = group.random(ZR)
-
-        s_2 = group.random(ZR)
-        t_2 = group.random(ZR)
-        m_2 = group.random(ZR)
-
-        s_3 = group.random(ZR)
-        t_3 = group.random(ZR)
-        m_3 = group.random(ZR)
-
-        gt = group.random(G2)
-
-        a_0 = (pair(v_j[0], gt) ** (-s_0)) * (pair(ped_g, gt) ** t_0)
-        a_1 = (pair(v_j[1], gt) ** (-s_1)) * (pair(ped_g, gt) ** t_1)
-        a_2 = (pair(v_j[2], gt) ** (-s_2)) * (pair(ped_g, gt) ** t_2)
-        a_3 = (pair(v_j[3], gt) ** (-s_3)) * (pair(ped_g, gt) ** t_3)
-
-        d = (
-            ((ped_g ** ((10 ** 0) * s_0)) * (ped_h ** m_0))
-            * ((ped_g ** ((10 ** 1) * s_1)) * (ped_h ** m_1))
-            * ((ped_g ** ((10 ** 2) * s_2)) * (ped_h ** m_2))
-            * ((ped_g ** ((10 ** 3) * s_3)) * (ped_h ** m_3))
+        SigmaProtocol.range_proof(
+            (v_n - points), com_v_n, open_v_n, points, ped_g, ped_h, group
         )
-
-        # Verifier
-        c = group.random(ZR)
-
-        # Prover
-        z_s_0 = s_0 - (int(str_num[3]) * c)
-        z_v_0 = t_0 - (v_0 * c)
-        z_r_0 = m_0 - (open_v_n * c)
-        z_s_1 = s_1 - (int(str_num[2]) * c)
-        z_v_1 = t_1 - (v_1 * c)
-        z_r_1 = m_1 - (open_v_n * c)
-        z_s_2 = s_2 - (int(str_num[1]) * c)
-        z_v_2 = t_2 - (v_2 * c)
-        z_r_2 = m_2 - (open_v_n * c)
-        z_s_3 = s_3 - (int(str_num[0]) * c)
-        z_v_3 = t_3 - (v_3 * c)
-        z_r_3 = m_3 - (open_v_n * c)
-        y_2 = gt ** x
-        z_r = (m_0 + m_1 + m_2 + m_3) - (open_v_n * c)
-        if not (
-            a_0
-            == (pair(v_j[0], y_2) ** c)
-            * (pair(v_j[0], gt) ** -z_s_0)
-            * (pair(ped_g, gt) ** z_v_0)
-        ):
-            print("Abort: (FZK_RD) A0 check failed.")
-        if not (
-            a_1
-            == (pair(v_j[1], y_2) ** c)
-            * (pair(v_j[1], gt) ** -z_s_1)
-            * (pair(ped_g, gt) ** z_v_1)
-        ):
-            print("Abort: (FZK_RD) A1 check failed.")
-        if not (
-            a_2
-            == (pair(v_j[2], y_2) ** c)
-            * (pair(v_j[2], gt) ** -z_s_2)
-            * (pair(ped_g, gt) ** z_v_2)
-        ):
-            print("Abort: (FZK_RD) A2 check failed.")
-        if not (
-            a_3
-            == (pair(v_j[3], y_2) ** c)
-            * (pair(v_j[3], gt) ** -z_s_3)
-            * (pair(ped_g, gt) ** z_v_3)
-        ):
-            print("Abort: (FZK_RD) A3 check failed.")
-        if not (
-            d
-            == (com_v_n ** c)
-            * (~(ped_g ** (points * c)))
-            * (ped_h ** (z_r))
-            * ((ped_g ** ((10 ** 0) * z_s_0)))
-            * ((ped_g ** ((10 ** 1) * z_s_1)))
-            * ((ped_g ** ((10 ** 2) * z_s_2)))
-            * ((ped_g ** ((10 ** 3) * z_s_3)))
-        ):
-            print("Abort: (FZK_RD) D check failed.")
         v_n_c = self.paillier_encryption.encrypt(
             self.public_key, integer(((v_n)))
         )
@@ -530,26 +405,10 @@ class FZK_PR3:
         self.f_nym = f_nym
         self.keylength = keylength
 
-    def get_record_by_index(self, list, index):
-        for item in list:
-            if item["i"] == index:
-                return item
-
-    def sign_u(self, i, g, x):
-        return g ** ((x + i) ** -1)
-
-    def num_to_str(self, num, length):
-        str_num = str(num)
-        if len(str_num) < length:
-            str_num = "0" * (length - len(str_num)) + str_num
-
-        return str_num
-
     def prove(
         self, sid, witness_pr, instance_pr, id, start, end, par_c, group
     ):
 
-        # COM CHECKS
         ped_g = par_c["g"]
         ped_h = par_c["h"]
         g = group.random(G1)
@@ -660,11 +519,9 @@ class FZK_PR3:
                     "penco": paillier_ciphertext_open_v,
                 }
             )
-            paillier_ciphertext_random_open_v = (
-                self.paillier_encryption.encrypt(
-                    self.public_key,
-                    integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
-                )
+            paillier_ciphertext_random_open_v = self.paillier_encryption.encrypt(
+                self.public_key,
+                integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
             )
             paillier_ciphertext_random_v = self.paillier_encryption.encrypt(
                 self.public_key, integer(SHA256(bytes(str(random_v), "utf-8")))
@@ -838,251 +695,25 @@ class FZK_PR3:
             com_i = self.get_record_by_index(instance_pr, witness_record["i"])[
                 "comi"
             ]
-
-            # Verifier picks x rand
-            x = group.random(ZR)
-            y = ped_h ** x
-
-            u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-            a_i = [
-                self.sign_u(0, ped_g, x),
-                self.sign_u(1, ped_g, x),
-                self.sign_u(2, ped_g, x),
-                self.sign_u(3, ped_g, x),
-                self.sign_u(4, ped_g, x),
-                self.sign_u(5, ped_g, x),
-                self.sign_u(6, ped_g, x),
-                self.sign_u(7, ped_g, x),
-                self.sign_u(8, ped_g, x),
-                self.sign_u(9, ped_g, x),
-            ]
-            str_num = self.num_to_str((witness_record["i"] - end) + 1000, 4)
-            # ul = 1000?
-            # Verifier picks vj rand
-            v_0 = group.random(ZR)
-            v_1 = group.random(ZR)
-            v_2 = group.random(ZR)
-            v_3 = group.random(ZR)
-
-            v_j = [
-                a_i[int(str_num[3])] ** v_0,
-                a_i[int(str_num[2])] ** v_1,
-                a_i[int(str_num[1])] ** v_2,
-                a_i[int(str_num[0])] ** v_3,
-            ]
-            # v_j = [a_i[0]**v0,a_i[0]**v1,a_i[1]**v2,a_i[0]**v3]
-            # Prover
-            s_0 = group.random(ZR)
-            t_0 = group.random(ZR)
-            m_0 = group.random(ZR)
-
-            s_1 = group.random(ZR)
-            t_1 = group.random(ZR)
-            m_1 = group.random(ZR)
-
-            s_2 = group.random(ZR)
-            t_2 = group.random(ZR)
-            m_2 = group.random(ZR)
-
-            s_3 = group.random(ZR)
-            t_3 = group.random(ZR)
-            m_3 = group.random(ZR)
-
-            gt = group.random(G2)
-
-            a_0 = (pair(v_j[0], gt) ** (-s_0)) * (pair(ped_g, gt) ** t_0)
-            a_1 = (pair(v_j[1], gt) ** (-s_1)) * (pair(ped_g, gt) ** t_1)
-            a_2 = (pair(v_j[2], gt) ** (-s_2)) * (pair(ped_g, gt) ** t_2)
-            a_3 = (pair(v_j[3], gt) ** (-s_3)) * (pair(ped_g, gt) ** t_3)
-
-            d = (
-                ((ped_g ** ((10 ** 0) * s_0)) * (ped_h ** m_0))
-                * ((ped_g ** ((10 ** 1) * s_1)) * (ped_h ** m_1))
-                * ((ped_g ** ((10 ** 2) * s_2)) * (ped_h ** m_2))
-                * ((ped_g ** ((10 ** 3) * s_3)) * (ped_h ** m_3))
+            SigmaProtocol.range_proof(
+                (witness_record["i"] - end) + 1000,
+                com_i,
+                open_i,
+                end - 1000,
+                ped_g,
+                ped_h,
+                group,
+            )
+            SigmaProtocol.range_proof(
+                (witness_record["i"] - start),
+                com_i,
+                open_i,
+                start,
+                ped_g,
+                ped_h,
+                group,
             )
 
-            # Ver
-            c = group.random(ZR)
-
-            # Prov
-            z_s_0 = s_0 - (int(str_num[3]) * c)
-            z_v_0 = t_0 - (v_0 * c)
-            z_r_0 = m_0 - (open_i * c)
-
-            z_s_1 = s_1 - (int(str_num[2]) * c)
-            z_v_1 = t_1 - (v_1 * c)
-            z_r_1 = m_1 - (open_i * c)
-
-            z_s_2 = s_2 - (int(str_num[1]) * c)
-            z_v_2 = t_2 - (v_2 * c)
-            z_r_2 = m_2 - (open_i * c)
-
-            z_s_3 = s_3 - (int(str_num[0]) * c)
-            z_v_3 = t_3 - (v_3 * c)
-            z_r_3 = m_3 - (open_i * c)
-            y = gt ** x
-            z_r = (m_0 + m_1 + m_2 + m_3) - (open_i * c)
-            if not (
-                a_0
-                == (pair(v_j[0], y) ** c)
-                * (pair(v_j[0], gt) ** -z_s_0)
-                * (pair(ped_g, gt) ** z_v_0)
-            ):
-                print("Abort: (FZK_PR) A0 check failed.")
-            if not (
-                a_1
-                == (pair(v_j[1], y) ** c)
-                * (pair(v_j[1], gt) ** -z_s_1)
-                * (pair(ped_g, gt) ** z_v_1)
-            ):
-                print("Abort: (FZK_PR) A1 check failed.")
-            if not (
-                a_2
-                == (pair(v_j[2], y) ** c)
-                * (pair(v_j[2], gt) ** -z_s_2)
-                * (pair(ped_g, gt) ** z_v_2)
-            ):
-                print("Abort: (FZK_PR) A2 check failed.")
-            if not (
-                a_3
-                == (pair(v_j[3], y) ** c)
-                * (pair(v_j[3], gt) ** -z_s_3)
-                * (pair(ped_g, gt) ** z_v_3)
-            ):
-                print("Abort: (FZK_PR) A3 check failed.")
-            if not (
-                d
-                == (com_i ** c)
-                * (~(ped_g ** ((end - 1000) * c)))
-                * (ped_h ** (z_r))
-                * ((ped_g ** ((10 ** 0) * z_s_0)))
-                * ((ped_g ** ((10 ** 1) * z_s_1)))
-                * ((ped_g ** ((10 ** 2) * z_s_2)))
-                * ((ped_g ** ((10 ** 3) * z_s_3)))
-            ):
-                print("Abort: (FZK_PR) D check failed.")
-            # Verifier picks x rand
-            x = group.random(ZR)
-            y = ped_h ** x
-            u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-            a_i = [
-                self.sign_u(0, ped_g, x),
-                self.sign_u(1, ped_g, x),
-                self.sign_u(2, ped_g, x),
-                self.sign_u(3, ped_g, x),
-                self.sign_u(4, ped_g, x),
-                self.sign_u(5, ped_g, x),
-                self.sign_u(6, ped_g, x),
-                self.sign_u(7, ped_g, x),
-                self.sign_u(8, ped_g, x),
-                self.sign_u(9, ped_g, x),
-            ]
-            # print('RSig size: '+str(sys.getsizeof(a_i)))
-            str_num = self.num_to_str(
-                (witness_record["i"] - start), 4
-            )  # ul = 1000?
-            # Verifier picks vj rand
-            v_0 = group.random(ZR)
-            v_1 = group.random(ZR)
-            v_2 = group.random(ZR)
-            v_3 = group.random(ZR)
-            v_j = [
-                a_i[int(str_num[3])] ** v_0,
-                a_i[int(str_num[2])] ** v_1,
-                a_i[int(str_num[1])] ** v_2,
-                a_i[int(str_num[0])] ** v_3,
-            ]
-            # v_j = [a_i[0]**v0,a_i[0]**v1,a_i[1]**v2,a_i[0]**v3]
-            # Prover
-            s_0 = group.random(ZR)
-            t_0 = group.random(ZR)
-            m_0 = group.random(ZR)
-
-            s_1 = group.random(ZR)
-            t_1 = group.random(ZR)
-            m_1 = group.random(ZR)
-
-            s_2 = group.random(ZR)
-            t_2 = group.random(ZR)
-            m_2 = group.random(ZR)
-
-            s_3 = group.random(ZR)
-            t_3 = group.random(ZR)
-            m_3 = group.random(ZR)
-
-            gt = group.random(G2)
-
-            a_0 = (pair(v_j[0], gt) ** (-s_0)) * (pair(ped_g, gt) ** t_0)
-            a_1 = (pair(v_j[1], gt) ** (-s_1)) * (pair(ped_g, gt) ** t_1)
-            a_2 = (pair(v_j[2], gt) ** (-s_2)) * (pair(ped_g, gt) ** t_2)
-            a_3 = (pair(v_j[3], gt) ** (-s_3)) * (pair(ped_g, gt) ** t_3)
-
-            d = (
-                ((ped_g ** ((10 ** 0) * s_0)) * (ped_h ** m_0))
-                * ((ped_g ** ((10 ** 1) * s_1)) * (ped_h ** m_1))
-                * ((ped_g ** ((10 ** 2) * s_2)) * (ped_h ** m_2))
-                * ((ped_g ** ((10 ** 3) * s_3)) * (ped_h ** m_3))
-            )
-
-            # Ver
-            c = group.random(ZR)
-
-            # Prov
-            z_s_0 = s_0 - (int(str_num[3]) * c)
-            z_v_0 = t_0 - (v_0 * c)
-            z_r_0 = m_0 - (open_i * c)
-            z_s_1 = s_1 - (int(str_num[2]) * c)
-            z_v_1 = t_1 - (v_1 * c)
-            z_r_1 = m_1 - (open_i * c)
-            z_s_2 = s_2 - (int(str_num[1]) * c)
-            z_v_2 = t_2 - (v_2 * c)
-            z_r_2 = m_2 - (open_i * c)
-            z_s_3 = s_3 - (int(str_num[0]) * c)
-            z_v_3 = t_3 - (v_3 * c)
-            z_r_3 = m_3 - (open_i * c)
-            y = gt ** x
-            z_r = (m_0 + m_1 + m_2 + m_3) - (open_i * c)
-            if not (
-                a_0
-                == (pair(v_j[0], y) ** c)
-                * (pair(v_j[0], gt) ** -z_s_0)
-                * (pair(ped_g, gt) ** z_v_0)
-            ):
-                print("Abort: (FZK_PR) A0 check failed.")
-            if not (
-                a_1
-                == (pair(v_j[1], y) ** c)
-                * (pair(v_j[1], gt) ** -z_s_1)
-                * (pair(ped_g, gt) ** z_v_1)
-            ):
-                print("Abort: (FZK_PR) A1 check failed.")
-            if not (
-                a_2
-                == (pair(v_j[2], y) ** c)
-                * (pair(v_j[2], gt) ** -z_s_2)
-                * (pair(ped_g, gt) ** z_v_2)
-            ):
-                print("Abort: (FZK_PR) A2 check failed.")
-            if not (
-                a_3
-                == (pair(v_j[3], y) ** c)
-                * (pair(v_j[3], gt) ** -z_s_3)
-                * (pair(ped_g, gt) ** z_v_3)
-            ):
-                print("Abort: (FZK_PR) A3 check failed.")
-            if not (
-                d
-                == (com_i ** c)
-                * (~(ped_g ** ((start) * c)))
-                * (ped_h ** (z_r))
-                * ((ped_g ** ((10 ** 0) * z_s_0)))
-                * ((ped_g ** ((10 ** 1) * z_s_1)))
-                * ((ped_g ** ((10 ** 2) * z_s_2)))
-                * ((ped_g ** ((10 ** 3) * z_s_3)))
-            ):
-                print("Abort: (FZK_PR) D check failed.")
         self.f_nym.insert(sid, id, id)
         self.l_store.append({"sid": sid, "p": id, "Tk": id})
         return instance_pr, result
