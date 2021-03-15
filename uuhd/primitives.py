@@ -22,16 +22,12 @@ from charm.toolbox.integergroup import (
     RSAGroup,
     IntegerGroupQ,
 )
-
 from charm.core.math import integer as charminteger
 from charm.toolbox.integergroup import lcm, integer
-from uuhd.measurement_util import get_real_size
-
-# Paillier Enc
 from charm.schemes.pkenc import pkenc_paillier99
-
-# DSA
 from charm.schemes.pksig import pksig_dsa
+
+from uuhd.measurement_util import get_real_size
 
 
 def SHA256(bytes_):
@@ -40,8 +36,13 @@ def SHA256(bytes_):
     return hash_.digest()
 
 
-# Vector Commitments
 class VectorCommitment:
+    """
+    Vector Commitments
+    | From: "Catalano D., Fiore D. (2013) Vector Commitments and Their Applications." 
+    | Available from: https://link.springer.com/chapter/10.1007/978-3-642-36362-7_5
+    """
+
     def __init__(self, pairing_group):
         self.pairing_group = pairing_group
 
@@ -146,8 +147,12 @@ class VectorCommitment:
         return v_com * (par["g"] ** r)
 
 
-# Pedersen Commitment Scheme
 class PedersenCommitment:
+    """
+    Pedersen Commitments
+    | From: "Pedersen, T. P. Non-interactive and information-theoretic secure veriable secret sharing. " 
+    """
+
     def __init__(self, pairing_group):
         self.pairing_group = pairing_group
 
@@ -163,7 +168,7 @@ class PedersenCommitment:
         commitment = (par["g"] ** x) * (par["h"] ** opening)
         return {"com": commitment, "open": opening}
 
-    # No rand
+    # No randomisation
     def commit_0(self, par, x):
         opening = 0
         commitment = (par["g"] ** x) * (par["h"] ** opening)
@@ -180,53 +185,16 @@ class PedersenCommitment:
         return commitment * (par["h"] ** r)
 
 
-# Integer Commitments
 class IntegerCommitment:
     """
-    def generate_keys(self):
-        rsa_group = RSAGroup()
-        (p, q, n) = rsa_group.paramgen(1024)
-        pp = 2 * p + 1
-        qq = 2 * q + 1
-        x = rsa_group.random(pp * qq)
-        H = (rsa_group.random(pp * qq)) ** 2
-        G = H ** x
-        return {"group": rsa_group, "p": p, "q": q, "n": n, "G": G, "H": H}
-
-    def get_random(self, par):
-        return par["group"].random(par["n"] / 4)
-
-    def commit(self, par, m):
-        msg = integer(SHA256(m))
-        opening = par["group"].random(par["n"] / 4)
-        commitment = ((par["G"] ** msg) * (par["H"] ** opening)) % par["n"]
-        return {"com": commitment, "open": opening}
-
-    def verify(self, par, commitment, m, opening):
-        msg = integer(SHA256(m))
-        temp_commitment = ((par["G"] ** msg) * (par["H"] ** opening)) % par["n"]
-        if temp_commitment == commitment:
-            return 1
-        else:
-            return 0
-
-    def int_commit(self, par, m):
-        opening = par["group"].random(par["n"] / 4)
-        commitment = ((par["G"] ** m) * (par["H"] ** opening)) % par["n"]
-        return {"com": commitment, "open": opening}
-
-    def int_verify(self, par, commitment, m, opening):
-        temp_commitment = ((par["G"] ** m) * (par["H"] ** opening)) % par["n"]
-        if temp_commitment == commitment:
-            return 1
-        else:
-            return 0
+    Integer Commitments
+    | From: "Damgård I., Fujisaki E. (2002) A Statistically-Hiding Integer Commitment Scheme Based on Groups with Hidden Order." 
+    | Available from: https://link.springer.com/chapter/10.1007/3-540-36178-2_8
     """
 
     def __init__(self, p, q, keylength):
         self.keylength = keylength
         if p == 0 or q == 0:
-            # (p, q, n) = rsa_group.paramgen(self.keylength)
             self.group = IntegerGroup()
             self.group.paramgen(keylength)
             p = self.group.p
@@ -250,8 +218,13 @@ class IntegerCommitment:
         return 0
 
 
-# Structure Preserving Signature Scheme
 class StructurePreservingSignature:
+    """
+    Structure Preserving Signatures
+    | From: "Masayuki Abe, Jens Groth, Kristiyan Haralambiev, and Miyako Ohkubo. Optimal structure-preserving signatures in asymmetric bilinear groups." 
+    | Available from: https://link.springer.com/chapter/10.1007/978-3-642-22792-9_37
+    """
+
     def __init__(self):
         pass
 
@@ -325,8 +298,13 @@ class StructurePreservingSignature:
             return 0
 
 
-# Modified DSA
 class DSA:
+    """
+    Digital Signature Algorithm (DSA)
+    
+    Added a random function
+    """
+
     def __init__(self, p=0, q=0):
         self.group = IntegerGroupQ()
         self.group.p, self.group.q, self.group.r = p, q, 2
@@ -343,8 +321,15 @@ class DSA:
         return self.group.random()
 
 
-# Modified Paillier
 class PaillierEncryption(pkenc_paillier99.Pai99):
+    """
+    Paillier Encryption Scheme
+    | From: "Public-Key Cryptosystems Based on Composite Degree Residuosity Classes" 
+    | Available from: http://link.springer.com/chapter/10.1007%2F3-540-48910-X_16
+
+    Overriding pe.encrypt because newer versions of Charm don't reveal randomness
+    """
+
     def __init__(self, group_object):
         self.group_object = group_object
         pkenc_paillier99.Pai99.__init__(self, self.group_object)

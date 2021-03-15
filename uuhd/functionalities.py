@@ -14,7 +14,6 @@ from charm.toolbox.pairinggroup import ZR, G1, G2, pair
 from charm.toolbox.integergroup import RSAGroup
 from charm.core.math.integer import integer
 
-
 from uuhd.jsonobjects import dict_from_class
 from uuhd.primitives import PaillierEncryption, SHA256, DSA, IntegerCommitment
 from uuhd.sigmaprotocol import (
@@ -27,6 +26,8 @@ from uuhd.sigmaprotocol import (
 
 
 class WeakReference:
+    """Stores and returns identifiers for parties in the protocol."""
+
     _id2obj_dict = weakref.WeakValueDictionary()
 
     def __init__(self):
@@ -42,6 +43,8 @@ class WeakReference:
 
 
 class FNYM:
+    """Ideal Functionality for a pseudonymous channel."""
+
     txn = []
 
     def __init__(self, weak_reference):
@@ -67,6 +70,8 @@ class FNYM:
 
 
 class FZK:
+    """Ideal Functionality for Zero Knowledge."""
+
     txn = []
 
     def __init__(self, fnym, keylength):
@@ -256,6 +261,8 @@ class FZK:
 
 
 class FZK_RD:
+    """Ideal functionality for Zero Knowledge (reading)."""
+
     l_store = []
 
     def __init__(self, f_nym, keylength):
@@ -400,6 +407,8 @@ class FZK_RD:
 
 
 class FZK_PR3:
+    """Ideal functionality for Zero Knowledge (profiling)."""
+
     l_store = []
 
     def __init__(self, f_nym, keylength):
@@ -407,7 +416,16 @@ class FZK_PR3:
         self.keylength = keylength
 
     def prove(
-        self, sid, witness_pr, instance_pr, id, start, end, par_c, group
+        self,
+        sid,
+        witness_pr,
+        instance_pr,
+        id,
+        start,
+        end,
+        par_c,
+        group,
+        threshold,
     ):
 
         ped_g = par_c["g"]
@@ -518,11 +536,9 @@ class FZK_PR3:
                     "penco": paillier_ciphertext_open_v,
                 }
             )
-            paillier_ciphertext_random_open_v = (
-                self.paillier_encryption.encrypt(
-                    self.public_key,
-                    integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
-                )
+            paillier_ciphertext_random_open_v = self.paillier_encryption.encrypt(
+                self.public_key,
+                integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
             )
             paillier_ciphertext_random_v = self.paillier_encryption.encrypt(
                 self.public_key, integer(SHA256(bytes(str(random_v), "utf-8")))
@@ -705,13 +721,18 @@ class FZK_PR3:
                 ped_h,
                 group,
             )
-
+        if result < threshold:
+            f_result = 0
+        else:
+            f_result = 1
         self.f_nym.insert(sid, id, id)
         self.l_store.append({"sid": sid, "p": id, "Tk": id})
-        return instance_pr, result
+        return instance_pr, f_result
 
 
 class FREG:
+    """Ideal functionality for key registration."""
+
     def __init__(self):
         self.key = ""
 
@@ -723,6 +744,8 @@ class FREG:
 
 
 class FCRS:
+    """Ideal functionality for Common Reference String generation."""
+
     def __init__(self):
         self.par = ""
         self.par_c = ""

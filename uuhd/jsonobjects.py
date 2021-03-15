@@ -125,18 +125,6 @@ class ZKWitness:
 
 
 class SubWitnessRecord:
-    # def __init__(self):
-    #     self.index=0
-    #     self.i=0
-    #     self.vr=0
-    #     self.copen_i=0
-    #     self.copen_ri=0
-    #     self.di_1 = 0
-    #     self.di_2 = 0
-    #     self.di_3 = 0
-    #     self.di_4 = 0
-    #     self.di_5 = 0
-
     def __init__(
         self,
         index=0,

@@ -61,7 +61,6 @@ parser.add_argument(
     default=False,
     help="Randomise database state",
 )
-# parser.add_argument('-w','--writetofile', action='writetofile', help='Paillier
 
 
 db_size = 100
@@ -73,7 +72,14 @@ if args.keylength == 1024 or args.keylength == 2048:
     keylength = args.keylength
 
 if args.size != None and int(args.size) > 10 and int(args.size) < 800000:
-    db_size = int(args.size)
+    print(
+        "Please enter a database size between 11 and 800000 (We need a database containing atleast 10 entries to test the profiling phase)."
+    )
+    exit()
+
+
+# Note: The variable names used here may not reflect the actual names used in our paper because we have renamed them for PEP-8 compliance.
+# However, dictionary keys and messages use names from the paper for brevity.
 
 
 # Curve specification
@@ -115,20 +121,22 @@ InstanceRecord = namedtuple("InstanceRecord", "ccom_i ccom_ri")
 
 
 def draw_table(headings, data):
+    """Prints an ASCII table to console."""
     table = Texttable()
     table.add_rows([headings, data])
     print(table.draw())
 
 
-# Sets up the CRS (public parameters for a Vector Commitment with a database of size 'nsize', and parameters for the Pedersen commitment scheme
 def setup(nsize):
+    """Sets up the CRS (public parameters for a Vector Commitment with a database of size 'nsize', and parameters for the Pedersen commitment scheme)."""
     par = vector_commitment.setup(nsize)
     par_c = pedersen_commitment.setup()
     f_crs.set(par, par_c)
 
 
-# Party U (Updater)
 class Updater:
+    """Party U (Updater)."""
+
     def __init__(self):
         pass
 
@@ -139,22 +147,22 @@ class Updater:
     l_par = []
     #   'sid', 'par', 'par_c', 'sps_public_key', 'sps_secret_key'
 
-    # Checks if pseudonym p has been seen before
     def is_unique_pseudonym(self, p):
+        """Checks if pseudonym p has been seen before."""
         for item in self.l_store:
             if p == item["p"]:
                 return 0
         return 1
 
-    # Returns the corresponding record in l_store for pseudonym = p
     def get_record_for_pseudonym(self, p):
+        """Returns the corresponding record in l_store for pseudonym = p."""
         for item in self.l_store:
             if p == item["p"]:
                 return item
         return 0
 
-    # Responses from U to messages from other parties/functionalities
     def message_in(self, m, p):
+        """Handles messages from other parties/functionalities to U."""
         if m["message"] == "com1":
             if not self.is_unique_pseudonym(p):
                 print("Abort: (Updater) p is not unique. (com1)")
@@ -191,8 +199,8 @@ class Updater:
             )
             exit()
 
-    # Responses from U to messages from other FZKs
     def proof_in(self, instance, p):
+        """Handles proof related messages from other FZKs to U."""
         if not self.is_unique_pseudonym(p):
             print("Abort: (Updater) p is not unique. (proof)")
             exit()
@@ -217,8 +225,8 @@ class Updater:
         )
         f_nym.reply({"message": "open", "com": instance["comd"]}, p)
 
-    # update interface
     def update(self, sid, p, values):
+        """Update interface."""
         record = self.get_record_for_pseudonym(p)
 
         if record == 0:
@@ -315,6 +323,8 @@ updater_id = weak_reference.remember(updater)
 
 
 class Reader:
+    """Party Rk (Reader)."""
+
     def __init__(self):
         pass
 
@@ -324,9 +334,8 @@ class Reader:
     l_store = []
     #   {'sid','par','par_c','sps_public_key','vcom','x','r','com','s','open','sig'}
 
-    # Returns a list consisting of commitments to the positions in i_list and their corresponding values in the database x
     def prepare_committed_record(self, i_list):
-
+        """Returns a list consisting of commitments to the positions in i_list and their corresponding values in the database x."""
         com_list = []
         for i in i_list:
             ccom_i = pedersen_commitment.commit(self.l_par[0]["par_c"], i)
@@ -345,20 +354,21 @@ class Reader:
         return com_list
 
     def update_table(self, i_list):
+        """Update x with values from i_list."""
         for i in range(1, len(i_list)):
             self.l_store[0]["x"][i] = self.l_store[0]["x"][i] + i_list[i]
 
     def prepare_blinded_witness(self, instance, witness):
+        """Blinds witnesses as required by the ZK compiler referenced in our paper (ref [10])."""
         # Unpack signatures
         sig = witness["sig"]
         R, S, T = sig["R"], sig["S"], sig["T"]
         sps_public_key = instance["sps_public_key"]
 
-        # Bases for blinding elements in g and gt(h from G@)
+        # Bases for blinding elements in g and gt
         h = instance["par"]["group"].random(G1)
         ht = instance["par"]["group"].random(G2)
 
-        #
         [d1, d2, d5] = group.random(ZR, 3)
         d3, d4 = witness["r2"], witness["open2"]
 
@@ -369,7 +379,7 @@ class Reader:
 
         comd, vcomd = instance["comd"], instance["vcomd"]
 
-        #
+        # We refer to instance and witness values related to database entries as subinstances and subwitnesses.
         subinstance_list = instance["subinstance"]
         subwitness_list = witness["subwitness"]
 
@@ -395,7 +405,6 @@ class Reader:
             sig_i = subwitness_record.sig_i
             R_i, S_i, T_i = sig_i["R"], sig_i["S"], sig_i["T"]
 
-            #
             [di_1, di_2, di_3, di_4, di_5] = group.random(ZR, 5)
 
             # Blind sigs
@@ -441,6 +450,7 @@ class Reader:
         )
 
     def test_witness_update(self, sid, p, i_list):
+        """Measures witness update times for HD."""
         if len(self.l_par) == 0 or len(self.l_store) == 0:
             print(
                 "Abort: (Reader) Party hasn't been initialised. (HD witness update tests)"
@@ -496,7 +506,7 @@ class Reader:
             )
 
     def read(self, sid, p, i_list):
-
+        """Read interface."""
         if len(self.l_par) == 0 or len(self.l_store) == 0:
             print("Abort: (Reader) Party hasn't been initialised. (read)")
             exit()
@@ -570,13 +580,13 @@ class Reader:
         blinded_instance, blinded_witness = self.prepare_blinded_witness(
             instance_read, witness_read
         )
-        # self.l_store[0]['ics'] = bics
         f_zk.prove(
             sid, blinded_witness, blinded_instance, p, self.obj_id, updater_id
         )
         return p
 
     def first_read(self, sid, p):
+        """Read interface, first execution."""
         if len(self.l_par) == 0:
             par, par_c = f_crs.get()
             s_1 = par["group"].random(ZR)
@@ -602,6 +612,7 @@ class Reader:
             return p
 
     def message_in(self, m, p):
+        """Handles messages from other parties to Rk."""
         if m["message"] == "setup":
             vcom = vector_commitment.commit(self.l_par[0]["par"], m["x"], 0)
             com_2 = pedersen_commitment.commit_0(
@@ -712,17 +723,19 @@ class Reader:
             )
 
 
+# Init reader and set sid
 reader_k = Reader()
 sid = random.randint(0, 99999999)
+
+# CRS setup
 setup(db_size)
 
-
-# Registration
 db_list = []
 empty_db_list = []
 
 
 def register():
+    """PPLS Registration interface."""
     t_register_start = time.time()
     p = reader_k.first_read(sid, 0)
     for i in range(0, db_size):
@@ -740,8 +753,8 @@ def register():
     print("lp.register.end; sid = " + str(sid) + "; P = " + str(p))
 
 
-# Purchase
 def purchase(i, v, v_n):
+    """PPLS Purchase interface."""
     t_purchase_start = time.time()
     p = random.randint(0, 99999999)
     com_list = reader_k.prepare_committed_record([2, 3])
@@ -755,9 +768,8 @@ def purchase(i, v, v_n):
     print("lp.purchase.end; sid = " + str(sid) + "; P = " + str(p))
 
 
-# Redemption
 def redeem(points):
-    # TODO: Store positional coms
+    """PPLS Redemption interface."""
     t_redeem_start = time.time()
     if points > reader_k.l_store[0]["x"][db_size]:
         print(
@@ -805,10 +817,7 @@ def redeem(points):
             )
             exit()
 
-        com_list = reader_k.prepare_committed_record(
-            #    [db_size, reader_k.l_store[0]["x"][db_size]]
-            [db_size]
-        )
+        com_list = reader_k.prepare_committed_record([db_size])
         p = reader_k.read(sid, p, com_list)
 
         temp_db_list = list(empty_db_list)
@@ -827,7 +836,7 @@ def redeem(points):
 
 
 def profile(start, end, val):
-
+    """PPLS Profile interface (Checks whether the sum of the values contained in the database between positions 'start' and 'end' is greater than 'val')."""
     com_list = []
     open_list = []
 
@@ -865,6 +874,7 @@ def profile(start, end, val):
         end,
         reader_k.l_par[0]["par_c"],
         group,
+        val,
     )
 
     for i in range(start, end + 1):

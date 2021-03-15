@@ -25,6 +25,8 @@ from uuhd.jsonobjects import (
 )
 from uuhd.primitives import DSA, PaillierEncryption, SHA256, IntegerCommitment
 
+# Note: We've hardcoded values for p and q for both the DSA and the Integer Commitment functions.
+# Our code includes provisions for generating these parameters at runtime, but this tends to skew the timing measurements of the protocol.
 pairing_group = PairingGroup("BN256")
 
 
@@ -60,6 +62,8 @@ def sign_u(i, g, x):
 
 
 class SigmaProtocol:
+    """Functions for both the prover and the verifier, called by the ZK functionalities."""
+
     def __init__(self, instance, pairing_group_string, keylength):
 
         self.r_d, self.s_d, self.t_d = (
@@ -90,7 +94,7 @@ class SigmaProtocol:
         self.ped_h, self.ped_g = (
             instance["par_c"]["h"],
             instance["par_c"]["g"],
-        )  # self.g
+        )
 
         self.sid = instance["sid"]
 
@@ -125,6 +129,7 @@ class SigmaProtocol:
         self.par_ic = self.integer_commitment.setup()
 
     def compute_ppe_1(self, d_1, d_2, d_3, d_4, side):
+        """Pairing product equation 1."""
         if side == "lhs":
             return (
                 (pair(self.r_d, self.v) ** self.one)
@@ -142,6 +147,7 @@ class SigmaProtocol:
             )
 
     def compute_ppe_2(self, d_1, d_5, side):
+        """Pairing product equation 2."""
         if side == "lhs":
             return (
                 (pair(self.r_d, self.t_d) ** self.one)
@@ -155,6 +161,7 @@ class SigmaProtocol:
             )
 
     def compute_ppe_3(self, index, i, copen_i, side):
+        """Pairing product equation 3."""
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return pair(record["ccom_i"], self.gt) ** self.one
@@ -164,6 +171,7 @@ class SigmaProtocol:
             )
 
     def compute_ppe_4(self, index, vr, copen_ri, side):
+        """Pairing product equation 4."""
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return pair(record["ccom_ri"], self.gt) ** self.one
@@ -173,6 +181,7 @@ class SigmaProtocol:
             )
 
     def compute_ppe_5(self, index, d_i_1, d_i_2, i, side):
+        """Pairing product equation 5."""
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return (
@@ -189,6 +198,7 @@ class SigmaProtocol:
             )
 
     def compute_ppe_6(self, index, d_i_1, d_i_3, d_i_4, side):
+        """Pairing product equation 6."""
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return (
@@ -209,6 +219,7 @@ class SigmaProtocol:
             )
 
     def compute_ppe_7(self, index, d_i_4, d_i_5, vr, side):
+        """Pairing product equation 7."""
         record = get_record_by_index(index, self.instance["ins_i"])
         if side == "lhs":
             return (pair(self.vcomd, record["phd_i"]) ** 1) * (
@@ -1048,7 +1059,7 @@ class SigmaProtocol:
         )
 
         for subwitness in witness["wit_i"]:
-            #
+
             [d_i_1, d_i_2, d_i_3, d_i_4, d_i_5] = (
                 subwitness["di_1"],
                 subwitness["di_2"],
@@ -1159,7 +1170,7 @@ class SigmaProtocol:
             commitment_d_5[1],
         )
         for subwitness in witness["wit_i"]:
-            #
+
             [d_i_1, d_i_2, d_i_3, d_i_4, d_i_5] = (
                 subwitness["di_1"],
                 subwitness["di_2"],
@@ -1257,9 +1268,7 @@ class SigmaProtocol:
             witness_integer_openings,
         )
 
-    def verifier_step_1(
-        self,
-    ):
+    def verifier_step_1(self,):
         return pairing_group.random(ZR)
 
     def verifier_step_2(
@@ -1304,7 +1313,7 @@ class SigmaProtocol:
         [r_1, r_2, r_3, r_4, r_5] = generate_n_random_exponents(5)
         random_witnesses.set_d(r_1, r_2, r_3, r_4, r_5)
         for subwitness in witness["wit_i"]:
-            #
+
             [
                 d_i_1,
                 d_i_2,
@@ -1390,7 +1399,7 @@ class SigmaProtocol:
         return self.prepare_paillier_ciphertexts(random_witness, 1)
 
     def range_proof(value, commitment, opening, limit, ped_g, ped_h, group):
-        # Verifier picks x rand
+        # Verifier chooses a random value x
         x = group.random(ZR)
         y = ped_h ** x
         u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

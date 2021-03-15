@@ -12,6 +12,7 @@ import sys
 
 
 def get_real_size(obj, seen=None):
+    """Needed because we use dicts and lists to store the CRS."""
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()
