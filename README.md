@@ -30,7 +30,7 @@ The code will then be accessible from the `/vagrant` directory, in the virtual m
 
 ### Manual Installation (Ubuntu)
 
-Instructions are available [here](docs/install_bionic.md).
+Instructions are available [here](doc/install_bionic.md).
 
 ### Manual Installation
 Our code requires Python 3.6, and the Charm-Crypto library (v0.50) built with the Relic toolkit (v0.5.0), as described on these pages:
