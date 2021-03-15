@@ -806,7 +806,7 @@ def redeem(points):
             exit()
 
         com_list = reader_k.prepare_committed_record(
-        #    [db_size, reader_k.l_store[0]["x"][db_size]]
+            #    [db_size, reader_k.l_store[0]["x"][db_size]]
             [db_size]
         )
         p = reader_k.read(sid, p, com_list)
@@ -868,9 +868,7 @@ def profile(start, end, val):
     )
 
     for i in range(start, end + 1):
-        com_list = reader_k.prepare_committed_record(
-            [i]
-        )
+        com_list = reader_k.prepare_committed_record([i])
         p = reader_k.read(sid, p, com_list)
         updater.update(sid, p, empty_db_list)
 

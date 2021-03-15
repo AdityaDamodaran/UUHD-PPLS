@@ -33,16 +33,19 @@ def get_record_by_index(index, list):
         if item["index"] == index:
             return item
 
+
 def get_record_by_i(index, list):
     for item in list:
         if item["i"] == index:
             return item
+
 
 def generate_n_random_exponents(n):
     exponents = []
     for i in range(0, n):
         exponents.append(pairing_group.random(ZR))
     return exponents
+
 
 def num_to_str(num, length):
     str_num = str(num)
@@ -363,7 +366,12 @@ class SigmaProtocol:
                 ),
             )
 
-            hash_random_i, hash_random_vr, hash_random_copen_i, hash_random_copen_ri = (
+            (
+                hash_random_i,
+                hash_random_vr,
+                hash_random_copen_i,
+                hash_random_copen_ri,
+            ) = (
                 integer(
                     SHA256(bytes(str(random_subwitness_record["i"]), "utf-8"))
                 ),
@@ -417,7 +425,13 @@ class SigmaProtocol:
 
         s_o_j = ZKWitness()
 
-        random_opening_1, random_opening_2, random_opening_3, random_opening_4, random_opening_5 = (
+        (
+            random_opening_1,
+            random_opening_2,
+            random_opening_3,
+            random_opening_4,
+            random_opening_5,
+        ) = (
             random_integer_openings["d1"],
             random_integer_openings["d2"],
             random_integer_openings["d3"],
@@ -1243,7 +1257,9 @@ class SigmaProtocol:
             witness_integer_openings,
         )
 
-    def verifier_step_1(self,):
+    def verifier_step_1(
+        self,
+    ):
         return pairing_group.random(ZR)
 
     def verifier_step_2(
@@ -1499,4 +1515,4 @@ class SigmaProtocol:
             * ((ped_g ** ((10 ** 3) * z_s_3)))
         ):
             print("Abort: (FZK_PR) D check failed.")
-        return c , y
+        return c, y

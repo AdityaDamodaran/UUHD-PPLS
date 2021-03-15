@@ -282,7 +282,7 @@ class FZK_RD:
         (self.public_key, self.secret_key) = self.paillier_encryption.keygen(
             self.keylength
         )
-        (c,y) = SigmaProtocol.range_proof(
+        (c, y) = SigmaProtocol.range_proof(
             (v_n - points), com_v_n, open_v_n, points, ped_g, ped_h, group
         )
         v_n_c = self.paillier_encryption.encrypt(
@@ -448,9 +448,7 @@ class FZK_PR3:
         s_ppe = 1
 
         for instance_record in instance_pr:
-            witness_record = get_record_by_i(
-                instance_record["i"], witness_pr
-            )
+            witness_record = get_record_by_i(instance_record["i"], witness_pr)
             random_v, random_opening_v = group.random(ZR), group.random(ZR)
             y_list.append(
                 {
@@ -520,9 +518,11 @@ class FZK_PR3:
                     "penco": paillier_ciphertext_open_v,
                 }
             )
-            paillier_ciphertext_random_open_v = self.paillier_encryption.encrypt(
-                self.public_key,
-                integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
+            paillier_ciphertext_random_open_v = (
+                self.paillier_encryption.encrypt(
+                    self.public_key,
+                    integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
+                )
             )
             paillier_ciphertext_random_v = self.paillier_encryption.encrypt(
                 self.public_key, integer(SHA256(bytes(str(random_v), "utf-8")))
@@ -540,12 +540,7 @@ class FZK_PR3:
             if not (
                 (
                     get_record_by_i(witness_record["i"], t_list)["e"]
-                    * (
-                        get_record_by_i(witness_record["i"], y_list)[
-                            "e"
-                        ]
-                    )
-                    ** c
+                    * (get_record_by_i(witness_record["i"], y_list)["e"]) ** c
                 )
                 == ((pair(ped_g, gt) ** s_v) * (pair(ped_h, gt) ** s_o_v))
             ):
@@ -691,9 +686,7 @@ class FZK_PR3:
         ped_h = par_c["h"]
         for witness_record in witness_pr:
             open_i = witness_record["openi"]
-            com_i = get_record_by_i(witness_record["i"], instance_pr)[
-                "comi"
-            ]
+            com_i = get_record_by_i(witness_record["i"], instance_pr)["comi"]
             SigmaProtocol.range_proof(
                 (witness_record["i"] - end) + 1000,
                 com_i,
