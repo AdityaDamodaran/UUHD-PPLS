@@ -58,8 +58,9 @@ positional arguments:
 
 optional arguments:
   -h, --help           show this help message and exit
-  -k K, --keylength K  Paillier Encryption key size (Supported values: 1024, 2048)
+  -k K, --keylength K  Paillier Encryption key size (Supported values: 1024, 2048; Default: 2048)
   -r, --randomise      Randomise database state 
+  -v, --verbose        Display database contents and commitment values
 ```
 ### Examples
  - Run tests against a database of size N = 100, random database values, and a Paillier key length of 2048 bits:
@@ -72,9 +73,9 @@ optional arguments:
   $ python3 ./protocol.py -k 2048 16000
   ```
 
-- Run tests against a database of size N = 65000, random database values, and a Paillier key length of 2048 bits:
+- Run tests against a database of size N = 65000, with random database values, and whilst displaying database contents:
   ```bash
-  $ python3 ./protocol.py -k 2048 -r 65000
+  $ python3 ./protocol.py -r -v 65000
   ```
 
 ### Results

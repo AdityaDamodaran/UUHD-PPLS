@@ -42,79 +42,10 @@ from uuhd.primitives import (
 )
 from uuhd.measurement_util import get_real_size
 
-parser = argparse.ArgumentParser(
-    description="Implementation of the protocol described in the"
-    + " titled 'Unlinkable Updatable Hiding Databases and"
-    + " Privacy-Preserving Loyalty Programs'"
-)
-parser.add_argument("size", metavar="N", type=int, help="Database size")
-
-parser.add_argument(
-    "-k",
-    "--keylength",
-    metavar="K",
-    type=int,
-    help="Paillier Encryption key size. (Supported values: 1024, 2048)",
-)
-parser.add_argument(
-    "-r",
-    "--randomise",
-    action="store_true",
-    default=False,
-    help="Randomise database state",
-)
-
-
-db_size = 100
-keylength = 2048
-
-args = parser.parse_args()
-
-if args.keylength == 1024 or args.keylength == 2048:
-    keylength = args.keylength
-
-if args.size != None and int(args.size) > 10 and int(args.size) < 800000:
-    db_size = int(args.size)
-else:
-    print(
-        "Please enter a database size between 11 and 800000 (We need a"
-        + " database containing atleast 10 entries to test the"
-        + " profiling phase)."
-    )
-    exit()
-
-
 # Note: The variable names used here may not reflect the actual names
 # used in our paper because we have renamed them for PEP-8 compliance.
 # However, dictionary keys and messages use names from the paper
 # for brevity.
-
-
-# Curve specification
-group = PairingGroup("BN256")
-
-# Primitive instantiation
-vector_commitment = VectorCommitment(group)
-structure_preserving_signature = StructurePreservingSignature()
-pedersen_commitment = PedersenCommitment(group)
-
-# Functionality instantiation
-f_crs = FCRS()
-weak_reference = WeakReference()
-f_nym = FNYM(weak_reference)
-f_reg = FREG()
-f_zk = FZK(f_nym, keylength)
-
-# Execution time measurement vars
-t_setup = ""
-t_first_update = ""
-t_comp_vcom = ""
-t_one_entry_update = ""
-t_one_entry_read = ""
-t_five_entry_read = ""
-t_register = ""
-t_purchase = ""
-t_redeem = ""
 
 
 # NTs
@@ -136,8 +67,8 @@ def draw_table(headings, data):
 
 
 def setup(nsize):
-    """Sets up the CRS (public parameters for a Vector Commitment with 
-    a database of size 'nsize', and parameters for the 
+    """Sets up the CRS (public parameters for a Vector Commitment with
+    a database of size 'nsize', and parameters for the
     Pedersen commitment scheme)."""
     par = vector_commitment.setup(nsize)
     par_c = pedersen_commitment.setup()
@@ -157,33 +88,33 @@ class Updater:
     l_par = []
     #   'sid', 'par', 'par_c', 'sps_public_key', 'sps_secret_key'
 
-    def is_unique_pseudonym(self, p):
+    def is_unique_pseudonym(self, pseudonym):
         """Checks if pseudonym p has been seen before."""
         for item in self.l_store:
-            if p == item["p"]:
+            if pseudonym == item["p"]:
                 return 0
         return 1
 
-    def get_record_for_pseudonym(self, p):
-        """Returns the corresponding record in l_store 
+    def get_record_for_pseudonym(self, pseudonym):
+        """Returns the corresponding record in l_store
         for pseudonym = p."""
         for item in self.l_store:
-            if p == item["p"]:
+            if pseudonym == item["p"]:
                 return item
         return 0
 
-    def message_in(self, m, p):
+    def message_in(self, m, pseudonym):
         """Handles messages from other parties/functionalities to U."""
         if m["message"] == "com1":
-            if not self.is_unique_pseudonym(p):
+            if not self.is_unique_pseudonym(pseudonym):
                 print("Abort: (Updater) p is not unique. (com1)")
                 exit()
             flag = 1
             self.l_store.append(
-                {"sid": sid, "p": p, "flag": flag, "com1": m["com1"]}
+                {"sid": sid, "p": pseudonym, "flag": flag, "com1": m["com1"]}
             )
         elif m["message"] == "repcom":
-            record = self.get_record_for_pseudonym(p)
+            record = self.get_record_for_pseudonym(pseudonym)
             if (
                 pedersen_commitment.verify(
                     self.l_par[0]["par_c"], record["com"], m["s1"], m["open1"]
@@ -194,15 +125,18 @@ class Updater:
             else:
                 print("Abort: (Updater) Commitment opening failed. (repcom)")
                 exit()
+            if args.verbose:
+                com_str = "; coms = " + str(record["coms"])
+            else:
+                com_str = "; coms"
             print(
-                "Updater: read.end; sid = "
+                "Updater: hd.read.end; sid = "
                 + str(record["sid"])
                 + "; p = "
                 + str(record["p"])
                 + "; flag = "
                 + str(record["flag"])
-                + "; coms = "
-                + str(record["coms"])
+                + com_str
             )
         else:
             print(
@@ -210,9 +144,9 @@ class Updater:
             )
             exit()
 
-    def proof_in(self, instance, p):
+    def proof_in(self, instance, pseudonym):
         """Handles proof related messages from other FZKs to U."""
-        if not self.is_unique_pseudonym(p):
+        if not self.is_unique_pseudonym(pseudonym):
             print("Abort: (Updater) p is not unique. (proof)")
             exit()
         if (
@@ -227,18 +161,18 @@ class Updater:
         self.l_store.append(
             {
                 "sid": sid,
-                "p": p,
+                "p": pseudonym,
                 "flag": 0,
                 "vcom": instance["vcomd"],
                 "com": instance["comd"],
                 "coms": instance["ins_i"],
             }
         )
-        f_nym.reply({"message": "open", "com": instance["comd"]}, p)
+        f_nym.reply({"message": "open", "com": instance["comd"]}, pseudonym)
 
-    def update(self, sid, p, values):
+    def update(self, sid, pseudonym, values):
         """Update interface."""
-        record = self.get_record_for_pseudonym(p)
+        record = self.get_record_for_pseudonym(pseudonym)
 
         if record == 0:
             print("Abort: (Updater) No records found for p. (update)")
@@ -326,13 +260,6 @@ class Updater:
             )
 
 
-# Updater instantiation
-updater = Updater()
-
-# Returns a unique identifer for U
-updater_id = weak_reference.remember(updater)
-
-
 class Reader:
     """Party Rk (Reader)."""
 
@@ -347,7 +274,7 @@ class Reader:
     # ,'open','sig'}
 
     def prepare_committed_record(self, i_list):
-        """Returns a list consisting of commitments to the positions in 
+        """Returns a list consisting of commitments to the positions in
         i_list and their corresponding values in the database x."""
         com_list = []
         for i in i_list:
@@ -372,26 +299,26 @@ class Reader:
             self.l_store[0]["x"][i] = self.l_store[0]["x"][i] + i_list[i]
 
     def prepare_blinded_witness(self, instance, witness):
-        """Blinds witnesses as required by the ZK compiler referenced 
+        """Blinds witnesses as required by the ZK compiler referenced
         in our paper (ref [10])."""
         # Unpack signatures
         sig = witness["sig"]
-        R, S, T = sig["R"], sig["S"], sig["T"]
+        r, s, t = sig["R"], sig["S"], sig["T"]
         sps_public_key = instance["sps_public_key"]
 
         # Bases for blinding elements in g and gt
         h = instance["par"]["group"].random(G1)
         ht = instance["par"]["group"].random(G2)
 
-        [d1, d2, d5] = group.random(ZR, 3)
-        d3, d4 = witness["r2"], witness["open2"]
+        [d_1, d_2, d_5] = group.random(ZR, 3)
+        d_3, d_4 = witness["r2"], witness["open2"]
 
         # Blind sigs
-        Rd = R * (h ** d1)
-        Sd = S * (h ** d2)
-        Td = T * (ht ** d5)
+        r_d = r * (h ** d_1)
+        s_d = s * (h ** d_2)
+        t_d = t * (ht ** d_5)
 
-        comd, vcomd = instance["comd"], instance["vcomd"]
+        com_d, vcom_d = instance["comd"], instance["vcomd"]
 
         # We refer to instance and witness values related to database
         # entries as subinstances and subwitnesses.
@@ -400,16 +327,16 @@ class Reader:
 
         index = 0
         blinded_witness = ZKWitness()
-        blinded_witness.set_d(d1, d2, d3, d4, d5)
+        blinded_witness.set_d(d_1, d_2, d_3, d_4, d_5)
 
         blinded_instance = ZKInstance()
-        blinded_instance.set_bsig(Rd, Sd, Td)
-        blinded_instance.set_comd(comd)
+        blinded_instance.set_bsig(r_d, s_d, t_d)
+        blinded_instance.set_comd(com_d)
         blinded_instance.set_par_c(instance["par_c"])
         blinded_instance.set_par(instance["par"])
         blinded_instance.set_pk(sps_public_key)
         blinded_instance.set_sid(sid)
-        blinded_instance.set_vcomd(vcomd)
+        blinded_instance.set_vcomd(vcom_d)
         blinded_instance.set_bh(h)
         blinded_instance.set_bht(ht)
 
@@ -418,23 +345,23 @@ class Reader:
 
             # Unpack sigs
             sig_i = subwitness_record.sig_i
-            R_i, S_i, T_i = sig_i["R"], sig_i["S"], sig_i["T"]
+            r_i, s_i, t_i = sig_i["R"], sig_i["S"], sig_i["T"]
 
-            [di_1, di_2, di_3, di_4, di_5] = group.random(ZR, 5)
+            [d_i_1, d_i_2, d_i_3, d_i_4, d_i_5] = group.random(ZR, 5)
 
             # Blind sigs
-            R_id = R_i * (h ** di_1)
-            S_id = S_i * (h ** di_2)
-            T_id = T_i * (ht ** di_3)
+            r_i_d = r_i * (h ** d_i_1)
+            s_i_d = s_i * (h ** d_i_2)
+            t_i_d = t_i * (ht ** d_i_3)
 
             # This is par_h[i] from VC par
             par_h_i = instance["par"]["par_h"][subwitness_record.i]
 
-            par_h_id = par_h_i * (ht ** di_4)
+            par_h_i_d = par_h_i * (ht ** d_i_4)
 
             # VC Witness
             w_i = subwitness_record.witness
-            w_id = w_i * (h ** di_5)
+            w_i_d = w_i * (h ** d_i_5)
 
             temp_blinded_subwitness_record = SubWitnessRecord(
                 index,
@@ -442,20 +369,20 @@ class Reader:
                 subwitness_record.vr,
                 subwitness_record.copen_i,
                 subwitness_record.copen_ri,
-                di_1,
-                di_2,
-                di_3,
-                di_4,
-                di_5,
+                d_i_1,
+                d_i_2,
+                d_i_3,
+                d_i_4,
+                d_i_5,
             )
             blinded_witness.append_subwitnesses(temp_blinded_subwitness_record)
             temp_blinded_instance_record = SubInstanceRecord(
                 index,
                 subinstance_record.ccom_i,
                 subinstance_record.ccom_ri,
-                {"R_id": R_id, "S_id": S_id, "T_id": T_id},
-                par_h_id,
-                w_id,
+                {"R_id": r_i_d, "S_id": s_i_d, "T_id": t_i_d},
+                par_h_i_d,
+                w_i_d,
             )
             blinded_instance.append_subinstances(temp_blinded_instance_record)
             index = index + 1
@@ -464,7 +391,7 @@ class Reader:
             dict_from_class(blinded_witness),
         )
 
-    def test_witness_update(self, sid, p, i_list):
+    def test_witness_update(self, i_list):
         """Measures witness update times for HD."""
         if len(self.l_par) == 0 or len(self.l_store) == 0:
             print(
@@ -473,14 +400,8 @@ class Reader:
             )
             exit()
 
-        r2 = self.l_par[0]["par"]["group"].random(ZR)
-        rd = self.l_store[0]["r"] + r2
-        vcomd = vector_commitment.rerand_com(
-            self.l_par[0]["par"], self.l_store[0]["vcom"], r2
-        )
-
-        w = []
-        instance = []
+        r_2 = self.l_par[0]["par"]["group"].random(ZR)
+        r_d = self.l_store[0]["r"] + r_2
 
         for i_list_item in i_list:
             if self.l_store[0]["x"][i_list_item.i] != i_list_item.vr:
@@ -489,29 +410,11 @@ class Reader:
                     + " (HD witness update tests)"
                 )
                 exit()
-            temp_witness_record = WitnessRecord(
-                i_list_item.i,
-                i_list_item.vr,
-                i_list_item.copen_i,
-                i_list_item.copen_ri,
-                vector_commitment.generate_witness(
-                    self.l_par[0]["par"],
-                    i_list_item.i,
-                    self.l_store[0]["x"],
-                    rd,
-                ),
-                self.l_store[0]["par_sig"][i_list_item.i],
-            )
+
             witness_1 = vector_commitment.generate_witness(
-                self.l_par[0]["par"], i_list_item.i, self.l_store[0]["x"], rd
+                self.l_par[0]["par"], i_list_item.i, self.l_store[0]["x"], r_d
             )
-            witness_2 = vector_commitment.generate_witness(
-                self.l_par[0]["par"],
-                i_list_item.i + 1,
-                self.l_store[0]["x"],
-                rd,
-            )
-            t_one_entry_update_start = time.time()
+
             global t_one_entry_update
             (witness_2, t_one_entry_update) = vector_commitment.update_witness(
                 self.l_par[0]["par"],
@@ -603,13 +506,12 @@ class Reader:
         )
         return p
 
-    def first_read(self, sid, p):
+    def first_read(self, sid, pseudonym):
         """Read interface, first execution."""
         if len(self.l_par) == 0:
             par, par_c = f_crs.get()
             s_1 = par["group"].random(ZR)
             s_1_com = pedersen_commitment.commit_0(par_c, s_1)
-            p = random.randint(0, 99999999)
             self.l_par.append(
                 {
                     "sid": sid,
@@ -623,13 +525,13 @@ class Reader:
             f_nym.send(
                 sid,
                 {"com1": s_1_com["com"], "message": "com1"},
-                p,
+                pseudonym,
                 weak_reference.remember(self),
                 updater_id,
             )
-            return p
+            return pseudonym
 
-    def message_in(self, m, p):
+    def message_in(self, m, pseudonym):
         """Handles messages from other parties to Rk."""
         if m["message"] == "setup":
             vcom = vector_commitment.commit(self.l_par[0]["par"], m["x"], 0)
@@ -694,7 +596,7 @@ class Reader:
                     "open1": old_open,
                     "com1": com_1["com"],
                 },
-                p,
+                pseudonym,
                 weak_reference.remember(self),
                 updater_id,
             )
@@ -733,25 +635,17 @@ class Reader:
             self.l_store[0]["s"] = self.l_par[0]["s1"] + m["s2"]
             self.l_store[0]["open"] = self.l_par[0]["open1"]
 
+            if args.verbose:
+                db_state = "; x = " + str(self.l_store[0]["x"])
+            else:
+                db_state = "; x"
             print(
-                "Reader: update.end, sid = "
+                "Reader: hd.update.end, sid = "
                 + str(self.l_par[0]["sid"])
                 + "; p = "
-                + str(p)
-                + "; x = "
-                + str(self.l_store[0]["x"])
+                + str(pseudonym)
+                + db_state
             )
-
-
-# Init reader and set sid
-reader_k = Reader()
-sid = random.randint(0, 99999999)
-
-# CRS setup
-setup(db_size)
-
-db_list = []
-empty_db_list = []
 
 
 def register():
@@ -759,7 +653,7 @@ def register():
     t_register_start = time.time()
     p = reader_k.first_read(sid, 0)
     for i in range(0, db_size):
-        if args.randomise == True:
+        if args.randomise is True:
             db_list.append(random.randint(0, 99))
         else:
             db_list.append(0)
@@ -770,7 +664,9 @@ def register():
     t_first_update = str(time.time() - t_first_update_start)
     global t_register
     t_register = str(time.time() - t_register_start)
-    print("lp.register.end; sid = " + str(sid) + "; P = " + str(p))
+    print(
+        "Vendor: lp.register.end; sid = " + str(sid) + "; P = " + str(p) + "\n"
+    )
 
 
 def purchase(i, v, v_n):
@@ -785,7 +681,9 @@ def purchase(i, v, v_n):
     updater.update(sid, p, temp_db_list)
     global t_purchase
     t_purchase = str(time.time() - t_purchase_start)
-    print("lp.purchase.end; sid = " + str(sid) + "; P = " + str(p))
+    print(
+        "Vendor: lp.purchase.end; sid = " + str(sid) + "; P = " + str(p) + "\n"
+    )
 
 
 def redeem(points):
@@ -848,18 +746,19 @@ def redeem(points):
         global t_redeem
         t_redeem = str(time.time() - t_redeem_start)
         print(
-            "lp.redeem.end; sid = "
+            "Vendor: lp.redeem.end; sid = "
             + str(sid)
             + "; P = "
             + str(p)
             + "; p = "
             + str(points)
+            + "\n"
         )
 
 
 def profile(start, end, val):
-    """PPLS Profile interface (Checks whether the sum of the values 
-    contained in the database between positions 'start' and 'end' 
+    """PPLS Profile interface (Checks whether the sum of the values
+    contained in the database between positions 'start' and 'end'
     is greater than 'val')."""
     com_list = []
     open_list = []
@@ -886,7 +785,6 @@ def profile(start, end, val):
     witness_pr = open_list
     instance_pr = com_list
 
-    p = random.randint(0, 99999999)
     f_zk_profile = FZK_PR3(f_nym, keylength)
 
     commitments, result = f_zk_profile.prove(
@@ -900,34 +798,121 @@ def profile(start, end, val):
         group,
         val,
     )
-
+    pseudonym = random.randint(0, 99999999)
     for i in range(start, end + 1):
         com_list = reader_k.prepare_committed_record([i])
-        p = reader_k.read(sid, p, com_list)
-        updater.update(sid, p, empty_db_list)
+        pseudonym = reader_k.read(sid, pseudonym, com_list)
+        updater.update(sid, pseudonym, empty_db_list)
 
     print(
-        "lp.profile.end; sid = "
+        "Vendor: lp.profile.end; sid = "
         + str(sid)
         + "; P = "
-        + str(p)
+        + str(pseudonym)
         + "; res = "
         + str(result)
+        + "\n"
     )
 
 
+parser = argparse.ArgumentParser(
+    description="Implementation of the protocol described in the"
+    + " titled 'Unlinkable Updatable Hiding Databases and"
+    + " Privacy-Preserving Loyalty Programs'"
+)
+parser.add_argument("size", metavar="N", type=int, help="Database size")
+
+parser.add_argument(
+    "-k",
+    "--keylength",
+    metavar="K",
+    type=int,
+    help="Paillier Encryption key size. (Supported values: 1024, 2048; Default: 2048)",
+)
+parser.add_argument(
+    "-r",
+    "--randomise",
+    action="store_true",
+    default=False,
+    help="Randomise database state",
+)
+parser.add_argument(
+    "-v",
+    "--verbose",
+    action="store_true",
+    default=False,
+    help="Display database contents and commitment values",
+)
+
+db_size = 100
+keylength = 2048
+
+args = parser.parse_args()
+
+if args.keylength == 1024 or args.keylength == 2048:
+    keylength = args.keylength
+
+if args.size is not None and 10 < int(args.size) < 800000:
+    db_size = int(args.size)
+else:
+    print(
+        "Please enter a database size between 11 and 800000 (We need a"
+        + " database containing atleast 10 entries to test the"
+        + " profiling phase)."
+    )
+    exit()
+
+
+# Curve specification
+group = PairingGroup("BN256")
+
+# Primitive instantiation
+vector_commitment = VectorCommitment(group)
+structure_preserving_signature = StructurePreservingSignature()
+pedersen_commitment = PedersenCommitment(group)
+
+# Functionality instantiation
+f_crs = FCRS()
+weak_reference = WeakReference()
+f_nym = FNYM(weak_reference)
+f_reg = FREG()
+f_zk = FZK(f_nym, keylength)
+
+# Updater instantiation
+updater = Updater()
+
+# Returns a unique identifer for U
+updater_id = weak_reference.remember(updater)
+
+
+# Init reader and set sid
+reader_k = Reader()
+sid = random.randint(0, 99999999)
+
+# CRS setup
+setup(db_size)
+
+db_list = []
+empty_db_list = []
+
+# PPLS Tests
 register()
+
 purchase(1, 2, 3)
+
 redeem(1)
 
+# Single entry profiling
 t_profile_1_start = time.time()
 profile(1, 1, 20)
 t_profile_1 = str(time.time() - t_profile_1_start)
 
+# 5 entry profiling
 t_profile_5_start = time.time()
 profile(1, 5, 20)
 t_profile_5 = str(time.time() - t_profile_5_start)
 
+# 10 entry profiling
 t_profile_10_start = time.time()
 profile(1, 10, 20)
 t_profile_10 = str(time.time() - t_profile_10_start)
@@ -942,24 +927,25 @@ t_profile_10 = str(time.time() - t_profile_10_start)
 # print("Vcom in bytes = " + str(get_real_size(reader_k.l_store[0]['vcom'])))
 # print("Opening in bytes = " + str(sys.getsizeof(reader_k.lwit [0])))
 
-p = random.randint(0, 99999999)
+# HD single entry read
 com_list = reader_k.prepare_committed_record([5])
 t_one_entry_read_start = time.time()
 p = reader_k.read(sid, 0, com_list)
 t_one_entry_read = str(time.time() - t_one_entry_read_start)
 
+
 temp_db_list = empty_db_list
 temp_db_list[4] = temp_db_list[4] + 2
 updater.update(sid, p, temp_db_list)
 
+# HD five entry read
 com_list = reader_k.prepare_committed_record([4, 5, 6, 7, 8])
-
 t_five_entry_read_start = time.time()
-p = reader_k.read(sid, 0, com_list)
+reader_k.read(sid, 0, com_list)
 t_five_entry_read = str(time.time() - t_five_entry_read_start)
 
 com_list = reader_k.prepare_committed_record([5])
-p = reader_k.test_witness_update(sid, 0, com_list)
+reader_k.test_witness_update(com_list)
 
 output_headings = [
     "N",
@@ -978,6 +964,7 @@ output_headings = [
     "10 Entry Profiling",
     "Setup",
 ]
+
 file_name = "UUHD-PPLS-Timing-data.xlsx"
 if not Path(file_name).exists():
     results_workbook = Workbook()

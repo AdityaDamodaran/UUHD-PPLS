@@ -15,7 +15,7 @@ from charm.toolbox.integergroup import RSAGroup
 from charm.core.math.integer import integer
 
 from uuhd.jsonobjects import dict_from_class
-from uuhd.primitives import PaillierEncryption, SHA256, DSA, IntegerCommitment
+from uuhd.primitives import PaillierEncryption, sha256, DSA, IntegerCommitment
 from uuhd.sigmaprotocol import (
     SigmaProtocol,
     get_record_by_i,
@@ -85,21 +85,7 @@ class FZK:
         # 6.5=di_1 #6.6=di_2  #6.7=di_3 #6.8=di_4
         # 6.9=di_5
 
-        # Load sigs
-        Rd, Sd, Td = (
-            instance["bsig"]["Rd"],
-            instance["bsig"]["Sd"],
-            instance["bsig"]["Td"],
-        )
-
-        public_key = instance["pk"]
-        V, Z = public_key["V"], public_key["Z"]
-        W1, W2 = public_key["W"][1], public_key["W"][2]
-        U1 = public_key["U"][1]
-
-        h, ht = instance["bh"], instance["bht"]
-
-        d1, d2, d3, d4, d5 = (
+        d_1, d_2, d_3, d_4, d_5 = (
             witness["d1"],
             witness["d2"],
             witness["d3"],
@@ -107,18 +93,13 @@ class FZK:
             witness["d5"],
         )
 
-        g, gt = instance["par"]["g"], instance["par"]["h"]
-        ped_g, ped_h = instance["par_c"]["g"], instance["par_c"]["h"]
-
-        vcomd, comd = instance["vcomd"], instance["comd"]
-
         subinstance_list = instance["ins_i"]
         subwitnesss_list = witness["wit_i"]
 
-        sigma_protocol = SigmaProtocol(instance, "BN256", self.keylength)
+        sigma_protocol = SigmaProtocol(instance, self.keylength)
 
-        y1 = sigma_protocol.compute_ppe_1(d1, d2, d3, d4, "lhs")
-        y2 = sigma_protocol.compute_ppe_2(d1, d5, "lhs")
+        y_1 = sigma_protocol.compute_ppe_1(d_1, d_2, d_3, d_4, "lhs")
+        y_2 = sigma_protocol.compute_ppe_2(d_1, d_5, "lhs")
 
         index = 0
         y_list = []
@@ -127,33 +108,33 @@ class FZK:
             subwitness_record = get_record_by_index(
                 subinstance_record["index"], subwitnesss_list
             )
-            y3 = sigma_protocol.compute_ppe_3(
+            y_3 = sigma_protocol.compute_ppe_3(
                 subinstance_record["index"],
                 subwitness_record["i"],
                 subwitness_record["copen_i"],
                 "lhs",
             )
-            y4 = sigma_protocol.compute_ppe_4(
+            y_4 = sigma_protocol.compute_ppe_4(
                 subinstance_record["index"],
                 subwitness_record["vr"],
                 subwitness_record["copen_ri"],
                 "lhs",
             )
-            y5 = sigma_protocol.compute_ppe_5(
+            y_5 = sigma_protocol.compute_ppe_5(
                 subinstance_record["index"],
                 subwitness_record["di_1"],
                 subwitness_record["di_2"],
                 subwitness_record["i"],
                 "lhs",
             )
-            y6 = sigma_protocol.compute_ppe_6(
+            y_6 = sigma_protocol.compute_ppe_6(
                 subinstance_record["index"],
                 subwitness_record["di_1"],
                 subwitness_record["di_3"],
                 subwitness_record["di_4"],
                 "lhs",
             )
-            y7 = sigma_protocol.compute_ppe_7(
+            y_7 = sigma_protocol.compute_ppe_7(
                 subinstance_record["index"],
                 subwitness_record["di_4"],
                 subwitness_record["di_5"],
@@ -163,76 +144,81 @@ class FZK:
             y_list.append(
                 {
                     "index": index,
-                    "y3": y3,
-                    "y4": y4,
-                    "y5": y5,
-                    "y6": y6,
-                    "y7": y7,
+                    "y3": y_3,
+                    "y4": y_4,
+                    "y5": y_5,
+                    "y6": y_6,
+                    "y7": y_7,
                 }
             )
             index = index + 1
-        y = {"y1": y1, "y2": y2, "yl": y_list}
+        y = {"y1": y_1, "y2": y_2, "yl": y_list}
 
         random_witness = sigma_protocol.prepare_random_witnesses(witness)
 
-        witness_ic, witness_ico = sigma_protocol.prepare_integer_commitments(
-            witness
+        (
+            witness_integer_commitments,
+            witness_integer_openings,
+        ) = sigma_protocol.prepare_integer_commitments(witness)
+
+        witness_paillier_ciphertexts = (
+            sigma_protocol.prepare_paillier_ciphertexts(witness)
         )
 
-        witness_pe = sigma_protocol.prepare_paillier_ciphertexts(witness)
-
         (
-            random_ic,
-            random_ico,
+            random_integer_commitments,
+            random_integer_openings,
         ) = sigma_protocol.prepare_random_integer_commitments(
             dict_from_class(random_witness)
         )
 
-        random_pe = sigma_protocol.prepare_random_paillier_ciphertexts(
-            dict_from_class(random_witness)
+        random_paillier_ciphertexts = (
+            sigma_protocol.prepare_random_paillier_ciphertexts(
+                dict_from_class(random_witness)
+            )
         )
         c = sigma_protocol.verifier_step_1()
         t = {
             "tj": sigma_protocol.compute_t(dict_from_class(random_witness)),
-            "tcj": random_ic,
-            "wcj": witness_ic,
+            "tcj": random_integer_commitments,
+            "wcj": witness_integer_commitments,
         }
 
-        hash_y = SHA256(
-            (str(y) + str(dict_from_class(witness_ic)) + str(t)).encode(
-                "utf-8"
-            )
+        hash_y = sha256(
+            (
+                str(y)
+                + str(dict_from_class(witness_integer_commitments))
+                + str(t)
+            ).encode("utf-8")
         )
 
         dsa_a = sigma_protocol.dsa.generate_random()
         dsa_b = sigma_protocol.dsa.generate_random()
-        gd = sigma_protocol.dsa_keys[0]["g"] ** dsa_a
+        g_d = sigma_protocol.dsa_keys[0]["g"] ** dsa_a
         tag = (
             sigma_protocol.dsa_keys[0]["g"]
-            ** integer(SHA256(str(sid).encode("utf-8")))
-        ) * (sigma_protocol.dsa_keys[0]["y"] ** gd)
-        dsa_c = (gd ** dsa_b) * (tag ** integer(hash_y))
-
-        r = {"rj": random_witness, "rco": random_ic, "wco": witness_ic}
+            ** integer(sha256(str(sid).encode("utf-8")))
+        ) * (sigma_protocol.dsa_keys[0]["y"] ** g_d)
+        dsa_c = (g_d ** dsa_b) * (tag ** integer(hash_y))
 
         s_j, hashes_j, hash_c = sigma_protocol.prover_step_2(
             dict_from_class(random_witness),
             c,
             witness,
-            dict_from_class(random_ico),
-            dict_from_class(witness_ico),
+            dict_from_class(random_integer_openings),
+            dict_from_class(witness_integer_openings),
         )
         sigma_protocol.verifier_step_2(
-            s_j, t, c, y, gd, dsa_c, dsa_b, witness_ic, sid
+            s_j, t, c, y, g_d, dsa_c, dsa_b, witness_integer_commitments, sid
         )
 
         if (
             sigma_protocol.verify_integer_commitments(
                 hash_c,
-                dict_from_class(random_ico),
-                dict_from_class(witness_ico),
-                dict_from_class(random_ic),
-                dict_from_class(witness_ic),
+                dict_from_class(random_integer_openings),
+                dict_from_class(witness_integer_openings),
+                dict_from_class(random_integer_commitments),
+                dict_from_class(witness_integer_commitments),
                 dict_from_class(hashes_j),
                 sigma_protocol.par_ic,
             )
@@ -242,8 +228,8 @@ class FZK:
             if (
                 sigma_protocol.verify_paillier_ciphertexts(
                     hash_c,
-                    dict_from_class(random_pe),
-                    dict_from_class(witness_pe),
+                    dict_from_class(random_paillier_ciphertexts),
+                    dict_from_class(witness_paillier_ciphertexts),
                     dict_from_class(hashes_j),
                 )
                 != 1
@@ -292,21 +278,19 @@ class FZK_RD:
         (c, y) = SigmaProtocol.range_proof(
             (v_n - points), com_v_n, open_v_n, points, ped_g, ped_h, group
         )
-        v_n_c = self.paillier_encryption.encrypt(
-            self.public_key, integer(((v_n)))
-        )
+        v_n_c = self.paillier_encryption.encrypt(self.public_key, integer(v_n))
         open_db_size_c = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(open_db_size), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(open_db_size), "utf-8")))
         )
 
         r_c_1 = group.random(ZR)
         r_c_2 = group.random(ZR)
 
         ciphertext_r_c_1 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(r_c_1), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(r_c_1), "utf-8")))
         )
         ciphertext_r_c_2 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(r_c_2), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(r_c_2), "utf-8")))
         )
 
         paillier_g, paillier_n, paillier_n_2 = (
@@ -315,7 +299,7 @@ class FZK_RD:
             self.public_key["n2"],
         )
 
-        hash_c = integer(SHA256(bytes(str(c), "utf-8")))
+        hash_c = integer(sha256(bytes(str(c), "utf-8")))
         c_1 = {"c": ciphertext_r_c_1[0]["c"] * (v_n_c[0]["c"] ** hash_c)}
         c_2 = {
             "c": ciphertext_r_c_2[0]["c"] * (open_db_size_c[0]["c"] ** hash_c)
@@ -327,7 +311,7 @@ class FZK_RD:
                     (
                         (paillier_g % paillier_n_2)
                         ** (
-                            integer(SHA256(bytes(str(r_c_1), "utf-8")))
+                            integer(sha256(bytes(str(r_c_1), "utf-8")))
                             + (hash_c * integer(v_n))
                         )
                     )
@@ -351,11 +335,11 @@ class FZK_RD:
                     (
                         (paillier_g % paillier_n_2)
                         ** (
-                            integer(SHA256(bytes(str(r_c_2), "utf-8")))
+                            integer(sha256(bytes(str(r_c_2), "utf-8")))
                             + (
                                 hash_c
                                 * integer(
-                                    SHA256(bytes(str(open_db_size), "utf-8"))
+                                    sha256(bytes(str(open_db_size), "utf-8"))
                                 )
                             )
                         )
@@ -385,20 +369,20 @@ class FZK_RD:
         dsa = DSA(dsa_p, dsa_q)
 
         dsa_keys = dsa.generate_keys(self.keylength)
-        hash_y = SHA256(str(y).encode("utf-8"))
+        hash_y = sha256(str(y).encode("utf-8"))
         dsa_a = dsa.generate_random()
         dsa_b = dsa.generate_random()
         g_d = dsa_keys[0]["g"] ** dsa_a
         tag = (
-            dsa_keys[0]["g"] ** integer(SHA256(str(sid).encode("utf-8")))
+            dsa_keys[0]["g"] ** integer(sha256(str(sid).encode("utf-8")))
         ) * (dsa_keys[0]["y"] ** g_d)
         dsa_c = (g_d ** dsa_b) * (tag ** integer(hash_y))
 
-        hash_m = SHA256(str(y).encode("utf-8"))
+        hash_m = sha256(str(y).encode("utf-8"))
         dsa_h = (
-            dsa_keys[0]["g"] ** integer(SHA256(str(sid).encode("utf-8")))
+            dsa_keys[0]["g"] ** integer(sha256(str(sid).encode("utf-8")))
         ) * (dsa_keys[0]["y"] ** g_d)
-        if not (((g_d ** dsa_b) * (dsa_h ** integer(hash_m))) == (dsa_c)):
+        if not (((g_d ** dsa_b) * (dsa_h ** integer(hash_m))) == dsa_c):
             print("Abort: (FZK_RD) DSA check failed.")
             exit()
 
@@ -462,7 +446,7 @@ class FZK_PR3:
 
         dsa_keys = dsa.generate_keys(self.keylength)
         c = group.random(ZR)
-        hash_c = integer(SHA256(bytes(str(c), "utf-8")))
+        hash_c = integer(sha256(bytes(str(c), "utf-8")))
         s_ppe = 1
 
         for instance_record in instance_pr:
@@ -488,7 +472,7 @@ class FZK_PR3:
             )
             integer_commitment_open_v = integer_commitment.commit(
                 par_ic,
-                integer(SHA256(bytes(str(witness_record["openv"]), "utf-8"))),
+                integer(sha256(bytes(str(witness_record["openv"]), "utf-8"))),
             )
             integer_commitments.append(
                 {
@@ -498,10 +482,10 @@ class FZK_PR3:
                 }
             )
             integer_commitment_random_v = integer_commitment.commit(
-                par_ic, integer(SHA256(bytes(str(random_v), "utf-8")))
+                par_ic, integer(sha256(bytes(str(random_v), "utf-8")))
             )
             integer_commitment_random_open_v = integer_commitment.commit(
-                par_ic, integer(SHA256(bytes(str(random_opening_v), "utf-8")))
+                par_ic, integer(sha256(bytes(str(random_opening_v), "utf-8")))
             )
             random_integer_commitments.append(
                 {
@@ -527,7 +511,7 @@ class FZK_PR3:
             )
             paillier_ciphertext_open_v = self.paillier_encryption.encrypt(
                 self.public_key,
-                integer(SHA256(bytes(str(witness_record["openv"]), "utf-8"))),
+                integer(sha256(bytes(str(witness_record["openv"]), "utf-8"))),
             )
             paillier_ciphertexts.append(
                 {
@@ -536,12 +520,14 @@ class FZK_PR3:
                     "penco": paillier_ciphertext_open_v,
                 }
             )
-            paillier_ciphertext_random_open_v = self.paillier_encryption.encrypt(
-                self.public_key,
-                integer(SHA256(bytes(str(random_opening_v), "utf-8"))),
+            paillier_ciphertext_random_open_v = (
+                self.paillier_encryption.encrypt(
+                    self.public_key,
+                    integer(sha256(bytes(str(random_opening_v), "utf-8"))),
+                )
             )
             paillier_ciphertext_random_v = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(random_v), "utf-8")))
+                self.public_key, integer(sha256(bytes(str(random_v), "utf-8")))
             )
             random_paillier_ciphertexts.append(
                 {
@@ -562,14 +548,14 @@ class FZK_PR3:
             ):
                 print("Abort: (FZK_PR) PPE Check failed.")
                 exit()
-            s_ppe = s_ppe * pair(g, gt) ** (s_v)
-            hash_random_v = integer(SHA256(bytes(str(random_v), "utf-8")))
+            s_ppe = s_ppe * pair(g, gt) ** s_v
+            hash_random_v = integer(sha256(bytes(str(random_v), "utf-8")))
             hash_random_open_v = integer(
-                SHA256(bytes(str(random_opening_v), "utf-8"))
+                sha256(bytes(str(random_opening_v), "utf-8"))
             )
             v = integer(witness_record["v"])
             open_v = integer(
-                SHA256(bytes(str(witness_record["openv"]), "utf-8"))
+                sha256(bytes(str(witness_record["openv"]), "utf-8"))
             )
             if not (
                 integer_commitment_random_v[0]
@@ -672,7 +658,7 @@ class FZK_PR3:
 
         y_result = pair(g ** result, gt)
         t_result = ppe
-        hash_y = SHA256(
+        hash_y = sha256(
             (str(y_list) + str(integer_commitments) + str(t_list)).encode(
                 "utf-8"
             )
@@ -681,21 +667,21 @@ class FZK_PR3:
         dsa_b = dsa.generate_random()
         g_d = dsa_keys[0]["g"] ** dsa_a
         tag = (
-            dsa_keys[0]["g"] ** integer(SHA256(str(sid).encode("utf-8")))
+            dsa_keys[0]["g"] ** integer(sha256(str(sid).encode("utf-8")))
         ) * (dsa_keys[0]["y"] ** g_d)
         dsa_c = (g_d ** dsa_b) * (tag ** integer(hash_y))
-        if not ((t_result * (y_result ** c)) == (s_ppe)):
+        if not ((t_result * (y_result ** c)) == s_ppe):
             print("Abort: (FZK_PR) PPE check failed.")
             exit()
-        hash_m = SHA256(
+        hash_m = sha256(
             (str(y_list) + str(integer_commitments) + str(t_list)).encode(
                 "utf-8"
             )
         )
         dsa_h = (
-            dsa_keys[0]["g"] ** integer(SHA256(str(sid).encode("utf-8")))
+            dsa_keys[0]["g"] ** integer(sha256(str(sid).encode("utf-8")))
         ) * (dsa_keys[0]["y"] ** g_d)
-        if not (((g_d ** dsa_b) * (dsa_h ** integer(hash_m))) == (dsa_c)):
+        if not (((g_d ** dsa_b) * (dsa_h ** integer(hash_m))) == dsa_c):
             print("Abort: (FZK_PR) DSA check failed.")
             exit()
         ped_g = par_c["g"]

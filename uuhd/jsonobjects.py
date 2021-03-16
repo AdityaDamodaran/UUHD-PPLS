@@ -31,8 +31,8 @@ class ZKInstance:
         self.bht = 0
         self.comd = 0
 
-    def set_bsig(self, R, S, T):
-        self.bsig["Rd"], self.bsig["Sd"], self.bsig["Td"] = R, S, T
+    def set_bsig(self, r, s, t):
+        self.bsig["Rd"], self.bsig["Sd"], self.bsig["Td"] = r, s, t
 
     def set_bh(self, bh):
         self.bh = bh

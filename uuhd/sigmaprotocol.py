@@ -23,7 +23,7 @@ from uuhd.jsonobjects import (
     SubWitnessRecord,
     dict_from_class,
 )
-from uuhd.primitives import DSA, PaillierEncryption, SHA256, IntegerCommitment
+from uuhd.primitives import DSA, PaillierEncryption, sha256, IntegerCommitment
 
 # Note: We've hardcoded values for p and q for both the DSA and the
 # Integer Commitment functions.
@@ -33,14 +33,14 @@ from uuhd.primitives import DSA, PaillierEncryption, SHA256, IntegerCommitment
 pairing_group = PairingGroup("BN256")
 
 
-def get_record_by_index(index, list):
-    for item in list:
+def get_record_by_index(index, record_list):
+    for item in record_list:
         if item["index"] == index:
             return item
 
 
-def get_record_by_i(index, list):
-    for item in list:
+def get_record_by_i(index, record_list):
+    for item in record_list:
         if item["i"] == index:
             return item
 
@@ -65,10 +65,10 @@ def sign_u(i, g, x):
 
 
 class SigmaProtocol:
-    """Functions for both the prover and the verifier, 
+    """Functions for both the prover and the verifier,
     called by the ZK functionalities."""
 
-    def __init__(self, instance, pairing_group_string, keylength):
+    def __init__(self, instance, keylength):
 
         self.r_d, self.s_d, self.t_d = (
             instance["bsig"]["Rd"],
@@ -263,11 +263,11 @@ class SigmaProtocol:
             random_witness["d5"],
         )
         hash_r_1, hash_r_2, hash_r_3, hash_r_4, hash_r_5 = (
-            integer(SHA256(bytes(str(r_1), "utf-8"))),
-            integer(SHA256(bytes(str(r_2), "utf-8"))),
-            integer(SHA256(bytes(str(r_3), "utf-8"))),
-            integer(SHA256(bytes(str(r_4), "utf-8"))),
-            integer(SHA256(bytes(str(r_5), "utf-8"))),
+            integer(sha256(bytes(str(r_1), "utf-8"))),
+            integer(sha256(bytes(str(r_2), "utf-8"))),
+            integer(sha256(bytes(str(r_3), "utf-8"))),
+            integer(sha256(bytes(str(r_4), "utf-8"))),
+            integer(sha256(bytes(str(r_5), "utf-8"))),
         )
 
         d_1, d_2, d_3, d_4, d_5 = (
@@ -278,14 +278,14 @@ class SigmaProtocol:
             witness["d5"],
         )
         hash_d_1, hash_d_2, hash_d_3, hash_d_4, hash_d_5 = (
-            integer(SHA256(bytes(str(d_1), "utf-8"))),
-            integer(SHA256(bytes(str(d_2), "utf-8"))),
-            integer(SHA256(bytes(str(d_3), "utf-8"))),
-            integer(SHA256(bytes(str(d_4), "utf-8"))),
-            integer(SHA256(bytes(str(d_5), "utf-8"))),
+            integer(sha256(bytes(str(d_1), "utf-8"))),
+            integer(sha256(bytes(str(d_2), "utf-8"))),
+            integer(sha256(bytes(str(d_3), "utf-8"))),
+            integer(sha256(bytes(str(d_4), "utf-8"))),
+            integer(sha256(bytes(str(d_5), "utf-8"))),
         )
 
-        hash_c = integer(SHA256(bytes(str(c), "utf-8")))
+        hash_c = integer(sha256(bytes(str(c), "utf-8")))
 
         s_j.set_d(
             r_1 + (c * d_1),
@@ -317,11 +317,11 @@ class SigmaProtocol:
             )
 
             hash_d_i_1, hash_d_i_2, hash_d_i_3, hash_d_i_4, hash_d_i_5 = (
-                integer(SHA256(bytes(str(d_i_1), "utf-8"))),
-                integer(SHA256(bytes(str(d_i_2), "utf-8"))),
-                integer(SHA256(bytes(str(d_i_3), "utf-8"))),
-                integer(SHA256(bytes(str(d_i_4), "utf-8"))),
-                integer(SHA256(bytes(str(d_i_5), "utf-8"))),
+                integer(sha256(bytes(str(d_i_1), "utf-8"))),
+                integer(sha256(bytes(str(d_i_2), "utf-8"))),
+                integer(sha256(bytes(str(d_i_3), "utf-8"))),
+                integer(sha256(bytes(str(d_i_4), "utf-8"))),
+                integer(sha256(bytes(str(d_i_5), "utf-8"))),
             )
 
             i, vr, copen_i, copen_ri = (
@@ -334,8 +334,8 @@ class SigmaProtocol:
             hash_i, hash_vr, hash_copen_i, hash_copen_ri = (
                 integer(subwitness["i"]),
                 integer(subwitness["vr"]),
-                integer(SHA256(bytes(str(subwitness["copen_i"]), "utf-8"))),
-                integer(SHA256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
+                integer(sha256(bytes(str(subwitness["copen_i"]), "utf-8"))),
+                integer(sha256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
             )
 
             r_i_1, r_i_2, r_i_3, r_i_4, r_i_5 = (
@@ -355,27 +355,27 @@ class SigmaProtocol:
 
             hash_r_i_1, hash_r_i_2, hash_r_i_3, hash_r_i_4, hash_r_i_5 = (
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(str(random_subwitness_record["di_1"]), "utf-8")
                     )
                 ),
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(str(random_subwitness_record["di_2"]), "utf-8")
                     )
                 ),
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(str(random_subwitness_record["di_3"]), "utf-8")
                     )
                 ),
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(str(random_subwitness_record["di_4"]), "utf-8")
                     )
                 ),
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(str(random_subwitness_record["di_5"]), "utf-8")
                     )
                 ),
@@ -388,20 +388,20 @@ class SigmaProtocol:
                 hash_random_copen_ri,
             ) = (
                 integer(
-                    SHA256(bytes(str(random_subwitness_record["i"]), "utf-8"))
+                    sha256(bytes(str(random_subwitness_record["i"]), "utf-8"))
                 ),
                 integer(
-                    SHA256(bytes(str(random_subwitness_record["vr"]), "utf-8"))
+                    sha256(bytes(str(random_subwitness_record["vr"]), "utf-8"))
                 ),
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(
                             str(random_subwitness_record["copen_i"]), "utf-8"
                         )
                     )
                 ),
                 integer(
-                    SHA256(
+                    sha256(
                         bytes(
                             str(random_subwitness_record["copen_ri"]), "utf-8"
                         )
@@ -1043,19 +1043,19 @@ class SigmaProtocol:
 
         paillier_ciphertexts = ZKWitness()
         ciphertext_d_1 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d_1), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(d_1), "utf-8")))
         )
         ciphertext_d_2 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d_2), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(d_2), "utf-8")))
         )
         ciphertext_d_3 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d_3), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(d_3), "utf-8")))
         )
         ciphertext_d_4 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d_4), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(d_4), "utf-8")))
         )
         ciphertext_d_5 = self.paillier_encryption.encrypt(
-            self.public_key, integer(SHA256(bytes(str(d_5), "utf-8")))
+            self.public_key, integer(sha256(bytes(str(d_5), "utf-8")))
         )
         paillier_ciphertexts.set_d(
             ciphertext_d_1,
@@ -1075,28 +1075,28 @@ class SigmaProtocol:
                 subwitness["di_5"],
             )
             ciphertext_d_i_1 = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(d_i_1), "utf-8")))
+                self.public_key, integer(sha256(bytes(str(d_i_1), "utf-8")))
             )
             ciphertext_d_i_2 = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(d_i_2), "utf-8")))
+                self.public_key, integer(sha256(bytes(str(d_i_2), "utf-8")))
             )
             ciphertext_d_i_3 = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(d_i_3), "utf-8")))
+                self.public_key, integer(sha256(bytes(str(d_i_3), "utf-8")))
             )
             ciphertext_d_i_4 = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(d_i_4), "utf-8")))
+                self.public_key, integer(sha256(bytes(str(d_i_4), "utf-8")))
             )
             ciphertext_d_i_5 = self.paillier_encryption.encrypt(
-                self.public_key, integer(SHA256(bytes(str(d_i_5), "utf-8")))
+                self.public_key, integer(sha256(bytes(str(d_i_5), "utf-8")))
             )
             if is_random:
                 ciphertext_i = self.paillier_encryption.encrypt(
                     self.public_key,
-                    integer(SHA256(bytes(str(subwitness["i"]), "utf-8"))),
+                    integer(sha256(bytes(str(subwitness["i"]), "utf-8"))),
                 )
                 ciphertext_vr = self.paillier_encryption.encrypt(
                     self.public_key,
-                    integer(SHA256(bytes(str(subwitness["vr"]), "utf-8"))),
+                    integer(sha256(bytes(str(subwitness["vr"]), "utf-8"))),
                 )
 
             else:
@@ -1109,11 +1109,11 @@ class SigmaProtocol:
 
             ciphertext_copen_i = self.paillier_encryption.encrypt(
                 self.public_key,
-                integer(SHA256(bytes(str(subwitness["copen_i"]), "utf-8"))),
+                integer(sha256(bytes(str(subwitness["copen_i"]), "utf-8"))),
             )
             ciphertext_copen_ri = self.paillier_encryption.encrypt(
                 self.public_key,
-                integer(SHA256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
+                integer(sha256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
             )
             temp_sw_paillier_ciphertexts = SubWitnessRecord(
                 subwitness["index"],
@@ -1146,19 +1146,19 @@ class SigmaProtocol:
         integer_openings = ZKWitness()
 
         commitment_d_1 = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d_1), "utf-8")))
+            self.par_ic, integer(sha256(bytes(str(d_1), "utf-8")))
         )
         commitment_d_2 = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d_2), "utf-8")))
+            self.par_ic, integer(sha256(bytes(str(d_2), "utf-8")))
         )
         commitment_d_3 = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d_3), "utf-8")))
+            self.par_ic, integer(sha256(bytes(str(d_3), "utf-8")))
         )
         commitment_d_4 = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d_4), "utf-8")))
+            self.par_ic, integer(sha256(bytes(str(d_4), "utf-8")))
         )
         commitment_d_5 = self.integer_commitment.commit(
-            self.par_ic, integer(SHA256(bytes(str(d_5), "utf-8")))
+            self.par_ic, integer(sha256(bytes(str(d_5), "utf-8")))
         )
 
         integer_commitments.set_d(
@@ -1186,28 +1186,28 @@ class SigmaProtocol:
                 subwitness["di_5"],
             )
             commitment_d_i_1 = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(d_i_1), "utf-8")))
+                self.par_ic, integer(sha256(bytes(str(d_i_1), "utf-8")))
             )
             commitment_d_i_2 = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(d_i_2), "utf-8")))
+                self.par_ic, integer(sha256(bytes(str(d_i_2), "utf-8")))
             )
             commitment_d_i_3 = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(d_i_3), "utf-8")))
+                self.par_ic, integer(sha256(bytes(str(d_i_3), "utf-8")))
             )
             commitment_d_i_4 = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(d_i_4), "utf-8")))
+                self.par_ic, integer(sha256(bytes(str(d_i_4), "utf-8")))
             )
             commitment_d_i_5 = self.integer_commitment.commit(
-                self.par_ic, integer(SHA256(bytes(str(d_i_5), "utf-8")))
+                self.par_ic, integer(sha256(bytes(str(d_i_5), "utf-8")))
             )
             if is_random:
                 commitment_i = self.integer_commitment.commit(
                     self.par_ic,
-                    integer(SHA256(bytes(str(subwitness["i"]), "utf-8"))),
+                    integer(sha256(bytes(str(subwitness["i"]), "utf-8"))),
                 )
                 commitment_vr = self.integer_commitment.commit(
                     self.par_ic,
-                    integer(SHA256(bytes(str(subwitness["vr"]), "utf-8"))),
+                    integer(sha256(bytes(str(subwitness["vr"]), "utf-8"))),
                 )
 
             else:
@@ -1220,11 +1220,11 @@ class SigmaProtocol:
 
             commitment_copen_i = self.integer_commitment.commit(
                 self.par_ic,
-                integer(SHA256(bytes(str(subwitness["copen_i"]), "utf-8"))),
+                integer(sha256(bytes(str(subwitness["copen_i"]), "utf-8"))),
             )
             commitment_copen_ri = self.integer_commitment.commit(
                 self.par_ic,
-                integer(SHA256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
+                integer(sha256(bytes(str(subwitness["copen_ri"]), "utf-8"))),
             )
 
             temp_sw_integer_commitments = SubWitnessRecord(
@@ -1275,7 +1275,9 @@ class SigmaProtocol:
             witness_integer_openings,
         )
 
-    def verifier_step_1(self,):
+    def verifier_step_1(
+        self,
+    ):
         return pairing_group.random(ZR)
 
     def verifier_step_2(
@@ -1300,7 +1302,7 @@ class SigmaProtocol:
             ):
                 print("Abort: (Sigma Protocol) Verifier step 2 failed.")
                 exit()
-        hash_m = SHA256(
+        hash_m = sha256(
             (
                 str(y)
                 + str(dict_from_class(witness_integer_commitments))
@@ -1308,10 +1310,10 @@ class SigmaProtocol:
             ).encode("utf-8")
         )
         dsa_h = (
-            self.dsa_keys[0]["g"] ** integer(SHA256(str(sid).encode("utf-8")))
+            self.dsa_keys[0]["g"] ** integer(sha256(str(sid).encode("utf-8")))
         ) * (self.dsa_keys[0]["y"] ** gd)
 
-        if not (((gd ** dsa_b) * (dsa_h ** integer(hash_m))) == (dsa_c)):
+        if not (((gd ** dsa_b) * (dsa_h ** integer(hash_m))) == dsa_c):
             print("Abort: (Sigma Protocol) DSA check failed.")
             exit()
 
@@ -1408,8 +1410,6 @@ class SigmaProtocol:
     def range_proof(value, commitment, opening, limit, ped_g, ped_h, group):
         # Verifier chooses a random value x
         x = group.random(ZR)
-        y = ped_h ** x
-        u_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         a_i = [
             sign_u(0, ped_g, x),
@@ -1477,19 +1477,16 @@ class SigmaProtocol:
         # Prover does the following
         z_s_0 = s_0 - (int(str_num[3]) * c)
         z_v_0 = t_0 - (v_0 * c)
-        z_r_0 = m_0 - (opening * c)
 
         z_s_1 = s_1 - (int(str_num[2]) * c)
         z_v_1 = t_1 - (v_1 * c)
-        z_r_1 = m_1 - (opening * c)
 
         z_s_2 = s_2 - (int(str_num[1]) * c)
         z_v_2 = t_2 - (v_2 * c)
-        z_r_2 = m_2 - (opening * c)
 
         z_s_3 = s_3 - (int(str_num[0]) * c)
         z_v_3 = t_3 - (v_3 * c)
-        z_r_3 = m_3 - (opening * c)
+
         y = gt ** x
         z_r = (m_0 + m_1 + m_2 + m_3) - (opening * c)
         if not (
@@ -1524,7 +1521,7 @@ class SigmaProtocol:
             d
             == (commitment ** c)
             * (~(ped_g ** (limit * c)))
-            * (ped_h ** (z_r))
+            * (ped_h ** z_r)
             * ((ped_g ** ((10 ** 0) * z_s_0)))
             * ((ped_g ** ((10 ** 1) * z_s_1)))
             * ((ped_g ** ((10 ** 2) * z_s_2)))

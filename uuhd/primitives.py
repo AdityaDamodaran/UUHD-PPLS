@@ -30,7 +30,7 @@ from charm.schemes.pksig import pksig_dsa
 from uuhd.measurement_util import get_real_size
 
 
-def SHA256(bytes_):
+def sha256(bytes_):
     hash_ = hashlib.new("sha256")
     hash_.update(bytes_)
     return hash_.digest()
@@ -40,8 +40,8 @@ class VectorCommitment:
     """
     Vector Commitments
     | From: "Catalano D., Fiore D. (2013) Vector Commitments and
-     Their Applications." 
-    | Available from: 
+     Their Applications."
+    | Available from:
     https://link.springer.com/chapter/10.1007/978-3-642-36362-7_5
     """
 
@@ -74,12 +74,12 @@ class VectorCommitment:
         # v_com_time_start = time.time()
         v_com = 1
         n = len(x) - 1
-        l = len(par["par_h"]) - 1
+        length = len(par["par_h"]) - 1
         for i in range(1, n + 1):
             if x[i] == 0:
                 pass
             else:
-                v_com = v_com * (par["par_g"][(l) + 1 - i] ** x[i])
+                v_com = v_com * (par["par_g"][length + 1 - i] ** x[i])
         v_com = v_com * (par["g"] ** r)
         # v_com_time_end = time.time()
         # print(
@@ -95,10 +95,10 @@ class VectorCommitment:
         # v_com_wit_time_start = time.time()
         witness = 1
         n = len(x) - 1
-        l = len(par["par_h"]) - 1
+        length = len(par["par_h"]) - 1
         for k in range(1, n + 1):
             if k != i:
-                witness = witness * (par["par_g"][l + 1 - k + i] ** x[k])
+                witness = witness * (par["par_g"][length + 1 - k + i] ** x[k])
         witness = witness * (par["par_g"][i] ** r)
         # v_com_wit_time_end = time.time()
         # print(
@@ -112,10 +112,10 @@ class VectorCommitment:
         return witness
 
     def verify(self, par, v_com, x, i, witness):
-        l = len(par["par_h"]) - 1
+        length = len(par["par_h"]) - 1
         lhs = pair(v_com, par["par_h"][i])
         rhs = pair(witness, par["h"]) * (
-            pair(par["par_g"][1], par["par_h"][l]) ** x
+            pair(par["par_g"][1], par["par_h"][length]) ** x
         )
         if lhs == rhs:
             return 1
@@ -157,7 +157,7 @@ class PedersenCommitment:
     """
     Pedersen Commitments
     | From: "Pedersen, T. P. Non-interactive and information-theoretic
-     secure veriable secret sharing. " 
+     secure veriable secret sharing. "
     """
 
     def __init__(self, pairing_group):
@@ -195,9 +195,9 @@ class PedersenCommitment:
 class IntegerCommitment:
     """
     Integer Commitments
-    | From: "Damgård I., Fujisaki E. (2002) A Statistically-Hiding 
-    Integer Commitment Scheme Based on Groups with Hidden Order." 
-    | Available from: 
+    | From: "Damgård I., Fujisaki E. (2002) A Statistically-Hiding
+    Integer Commitment Scheme Based on Groups with Hidden Order."
+    | Available from:
     https://link.springer.com/chapter/10.1007/3-540-36178-2_8
     """
 
@@ -217,12 +217,16 @@ class IntegerCommitment:
         return {"h": h, "g": g}
 
     def commit(self, par_ic, message):
-        open = integer(charminteger.randomBits(self.keylength))
-        com = ((par_ic["g"] ** message) * (par_ic["h"] ** open)) % self.n
-        return (com, open)
+        opening = integer(charminteger.randomBits(self.keylength))
+        commitment = (
+            (par_ic["g"] ** message) * (par_ic["h"] ** opening)
+        ) % self.n
+        return commitment, opening
 
-    def decommit(self, par_ic, com, open, message):
-        if ((par_ic["g"] ** message) * (par_ic["h"] ** open)) % self.n == com:
+    def decommit(self, par_ic, commitment, opening, message):
+        if (
+            (par_ic["g"] ** message) * (par_ic["h"] ** opening)
+        ) % self.n == commitment:
             return 1
         return 0
 
@@ -231,9 +235,9 @@ class StructurePreservingSignature:
     """
     Structure Preserving Signatures
     | From: "Masayuki Abe, Jens Groth, Kristiyan Haralambiev,
-     and Miyako Ohkubo. Optimal structure-preserving signatures 
-     in asymmetric bilinear groups." 
-    | Available from: 
+     and Miyako Ohkubo. Optimal structure-preserving signatures
+     in asymmetric bilinear groups."
+    | Available from:
     https://link.springer.com/chapter/10.1007/978-3-642-22792-9_37
     """
 
@@ -313,7 +317,7 @@ class StructurePreservingSignature:
 class DSA:
     """
     Digital Signature Algorithm (DSA)
-    
+
     Added a random function
     """
 
@@ -336,12 +340,12 @@ class DSA:
 class PaillierEncryption(pkenc_paillier99.Pai99):
     """
     Paillier Encryption Scheme
-    | From: "Public-Key Cryptosystems Based on Composite Degree 
-    Residuosity Classes" 
-    | Available from: 
+    | From: "Public-Key Cryptosystems Based on Composite Degree
+    Residuosity Classes"
+    | Available from:
     http://link.springer.com/chapter/10.1007%2F3-540-48910-X_16
 
-    Overriding pe.encrypt because newer versions 
+    Overriding pe.encrypt because newer versions
     of Charm don't reveal randomness
     """
 
