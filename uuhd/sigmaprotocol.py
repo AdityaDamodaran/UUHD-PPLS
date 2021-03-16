@@ -25,8 +25,11 @@ from uuhd.jsonobjects import (
 )
 from uuhd.primitives import DSA, PaillierEncryption, SHA256, IntegerCommitment
 
-# Note: We've hardcoded values for p and q for both the DSA and the Integer Commitment functions.
-# Our code includes provisions for generating these parameters at runtime, but this tends to skew the timing measurements of the protocol.
+# Note: We've hardcoded values for p and q for both the DSA and the
+# Integer Commitment functions.
+# Our code includes provisions for generating these parameters at
+# runtime, but this tends to skew the timing measurements
+# of the protocol.
 pairing_group = PairingGroup("BN256")
 
 
@@ -62,7 +65,8 @@ def sign_u(i, g, x):
 
 
 class SigmaProtocol:
-    """Functions for both the prover and the verifier, called by the ZK functionalities."""
+    """Functions for both the prover and the verifier, 
+    called by the ZK functionalities."""
 
     def __init__(self, instance, pairing_group_string, keylength):
 
@@ -649,7 +653,8 @@ class SigmaProtocol:
             )
         ):
             print(
-                "Abort: (Sigma Protocol) Paillier ciphertext verification failed."
+                "Abort: (Sigma Protocol) Paillier ciphertext"
+                + " verification failed."
             )
             exit()
         for subwitness in witness_paillier_ciphertexts["wit_i"]:
@@ -696,7 +701,8 @@ class SigmaProtocol:
                 )
             ):
                 print(
-                    "Abort: (Sigma Protocol) Paillier ciphertext verification failed."
+                    "Abort: (Sigma Protocol) Paillier ciphertext"
+                    + " verification failed."
                 )
                 exit()
             if (
@@ -752,7 +758,8 @@ class SigmaProtocol:
                 )
             ):
                 print(
-                    "Abort: (Sigma Protocol) Paillier ciphertext verification failed."
+                    "Abort: (Sigma Protocol) Paillier ciphertext"
+                    + " verification failed."
                 )
                 exit()
         return 1

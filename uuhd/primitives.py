@@ -39,8 +39,10 @@ def SHA256(bytes_):
 class VectorCommitment:
     """
     Vector Commitments
-    | From: "Catalano D., Fiore D. (2013) Vector Commitments and Their Applications." 
-    | Available from: https://link.springer.com/chapter/10.1007/978-3-642-36362-7_5
+    | From: "Catalano D., Fiore D. (2013) Vector Commitments and
+     Their Applications." 
+    | Available from: 
+    https://link.springer.com/chapter/10.1007/978-3-642-36362-7_5
     """
 
     def __init__(self, pairing_group):
@@ -85,7 +87,8 @@ class VectorCommitment:
         # )
 
         # Uncomment for v_com size measurements
-        # print("Vector commitment size in bytes= " + str(get_real_size(v_com)))
+        # print("Vector commitment size in bytes= " + \
+        # str(get_real_size(v_com)))
         return v_com
 
     def generate_witness(self, par, i, x, r):
@@ -99,11 +102,13 @@ class VectorCommitment:
         witness = witness * (par["par_g"][i] ** r)
         # v_com_wit_time_end = time.time()
         # print(
-        #     "Witness generated in " + str(v_com_wit_time_end - v_com_wit_time_start)
+        #     "Witness generated in " + \
+        # str(v_com_wit_time_end - v_com_wit_time_start)
         # )
 
         # Uncomment for v_com size measurements
-        # print("Vcom witness size in bytes= " + str(get_real_size(witness)))
+        # print("Vcom witness size in bytes= " + \
+        # str(get_real_size(witness)))
         return witness
 
     def verify(self, par, v_com, x, i, witness):
@@ -124,7 +129,8 @@ class VectorCommitment:
         )
         # v_com_com_update_time_end = time.time()
 
-        # print("Com updated in " + str(v_com_com_update_time_end - v_com_com_update_time_start))
+        # print("Com updated in " + \
+        # str(v_com_com_update_time_end - v_com_com_update_time_start))
         return result
 
     def update_witness(self, par, w, i, j, x, xd):
@@ -150,7 +156,8 @@ class VectorCommitment:
 class PedersenCommitment:
     """
     Pedersen Commitments
-    | From: "Pedersen, T. P. Non-interactive and information-theoretic secure veriable secret sharing. " 
+    | From: "Pedersen, T. P. Non-interactive and information-theoretic
+     secure veriable secret sharing. " 
     """
 
     def __init__(self, pairing_group):
@@ -188,8 +195,10 @@ class PedersenCommitment:
 class IntegerCommitment:
     """
     Integer Commitments
-    | From: "Damgård I., Fujisaki E. (2002) A Statistically-Hiding Integer Commitment Scheme Based on Groups with Hidden Order." 
-    | Available from: https://link.springer.com/chapter/10.1007/3-540-36178-2_8
+    | From: "Damgård I., Fujisaki E. (2002) A Statistically-Hiding 
+    Integer Commitment Scheme Based on Groups with Hidden Order." 
+    | Available from: 
+    https://link.springer.com/chapter/10.1007/3-540-36178-2_8
     """
 
     def __init__(self, p, q, keylength):
@@ -221,8 +230,11 @@ class IntegerCommitment:
 class StructurePreservingSignature:
     """
     Structure Preserving Signatures
-    | From: "Masayuki Abe, Jens Groth, Kristiyan Haralambiev, and Miyako Ohkubo. Optimal structure-preserving signatures in asymmetric bilinear groups." 
-    | Available from: https://link.springer.com/chapter/10.1007/978-3-642-22792-9_37
+    | From: "Masayuki Abe, Jens Groth, Kristiyan Haralambiev,
+     and Miyako Ohkubo. Optimal structure-preserving signatures 
+     in asymmetric bilinear groups." 
+    | Available from: 
+    https://link.springer.com/chapter/10.1007/978-3-642-22792-9_37
     """
 
     def __init__(self):
@@ -324,10 +336,13 @@ class DSA:
 class PaillierEncryption(pkenc_paillier99.Pai99):
     """
     Paillier Encryption Scheme
-    | From: "Public-Key Cryptosystems Based on Composite Degree Residuosity Classes" 
-    | Available from: http://link.springer.com/chapter/10.1007%2F3-540-48910-X_16
+    | From: "Public-Key Cryptosystems Based on Composite Degree 
+    Residuosity Classes" 
+    | Available from: 
+    http://link.springer.com/chapter/10.1007%2F3-540-48910-X_16
 
-    Overriding pe.encrypt because newer versions of Charm don't reveal randomness
+    Overriding pe.encrypt because newer versions 
+    of Charm don't reveal randomness
     """
 
     def __init__(self, group_object):

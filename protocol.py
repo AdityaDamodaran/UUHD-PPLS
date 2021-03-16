@@ -43,7 +43,9 @@ from uuhd.primitives import (
 from uuhd.measurement_util import get_real_size
 
 parser = argparse.ArgumentParser(
-    description="Implementation of the protocol described in the paper titled 'Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs'"
+    description="Implementation of the protocol described in the"
+    + " titled 'Unlinkable Updatable Hiding Databases and"
+    + " Privacy-Preserving Loyalty Programs'"
 )
 parser.add_argument("size", metavar="N", type=int, help="Database size")
 
@@ -75,13 +77,17 @@ if args.size != None and int(args.size) > 10 and int(args.size) < 800000:
     db_size = int(args.size)
 else:
     print(
-        "Please enter a database size between 11 and 800000 (We need a database containing atleast 10 entries to test the profiling phase)."
+        "Please enter a database size between 11 and 800000 (We need a"
+        + " database containing atleast 10 entries to test the"
+        + " profiling phase)."
     )
     exit()
 
 
-# Note: The variable names used here may not reflect the actual names used in our paper because we have renamed them for PEP-8 compliance.
-# However, dictionary keys and messages use names from the paper for brevity.
+# Note: The variable names used here may not reflect the actual names
+# used in our paper because we have renamed them for PEP-8 compliance.
+# However, dictionary keys and messages use names from the paper
+# for brevity.
 
 
 # Curve specification
@@ -130,7 +136,9 @@ def draw_table(headings, data):
 
 
 def setup(nsize):
-    """Sets up the CRS (public parameters for a Vector Commitment with a database of size 'nsize', and parameters for the Pedersen commitment scheme)."""
+    """Sets up the CRS (public parameters for a Vector Commitment with 
+    a database of size 'nsize', and parameters for the 
+    Pedersen commitment scheme)."""
     par = vector_commitment.setup(nsize)
     par_c = pedersen_commitment.setup()
     f_crs.set(par, par_c)
@@ -157,7 +165,8 @@ class Updater:
         return 1
 
     def get_record_for_pseudonym(self, p):
-        """Returns the corresponding record in l_store for pseudonym = p."""
+        """Returns the corresponding record in l_store 
+        for pseudonym = p."""
         for item in self.l_store:
             if p == item["p"]:
                 return item
@@ -334,10 +343,12 @@ class Reader:
     #   {'sid','par','par_c','com1','s1','open1'}
 
     l_store = []
-    #   {'sid','par','par_c','sps_public_key','vcom','x','r','com','s','open','sig'}
+    #   {'sid','par','par_c','sps_public_key','vcom','x','r','com','s'
+    # ,'open','sig'}
 
     def prepare_committed_record(self, i_list):
-        """Returns a list consisting of commitments to the positions in i_list and their corresponding values in the database x."""
+        """Returns a list consisting of commitments to the positions in 
+        i_list and their corresponding values in the database x."""
         com_list = []
         for i in i_list:
             ccom_i = pedersen_commitment.commit(self.l_par[0]["par_c"], i)
@@ -361,7 +372,8 @@ class Reader:
             self.l_store[0]["x"][i] = self.l_store[0]["x"][i] + i_list[i]
 
     def prepare_blinded_witness(self, instance, witness):
-        """Blinds witnesses as required by the ZK compiler referenced in our paper (ref [10])."""
+        """Blinds witnesses as required by the ZK compiler referenced 
+        in our paper (ref [10])."""
         # Unpack signatures
         sig = witness["sig"]
         R, S, T = sig["R"], sig["S"], sig["T"]
@@ -381,7 +393,8 @@ class Reader:
 
         comd, vcomd = instance["comd"], instance["vcomd"]
 
-        # We refer to instance and witness values related to database entries as subinstances and subwitnesses.
+        # We refer to instance and witness values related to database
+        # entries as subinstances and subwitnesses.
         subinstance_list = instance["subinstance"]
         subwitness_list = witness["subwitness"]
 
@@ -455,7 +468,8 @@ class Reader:
         """Measures witness update times for HD."""
         if len(self.l_par) == 0 or len(self.l_store) == 0:
             print(
-                "Abort: (Reader) Party hasn't been initialised. (HD witness update tests)"
+                "Abort: (Reader) Party hasn't been initialised."
+                + " (HD witness update tests)"
             )
             exit()
 
@@ -471,7 +485,8 @@ class Reader:
         for i_list_item in i_list:
             if self.l_store[0]["x"][i_list_item.i] != i_list_item.vr:
                 print(
-                    "Abort: (Reader) input tuples do not match HD state. (HD witness update tests)"
+                    "Abort: (Reader) input tuples do not match HD state."
+                    + " (HD witness update tests)"
                 )
                 exit()
             temp_witness_record = WitnessRecord(
@@ -524,7 +539,8 @@ class Reader:
         for i_list_item in i_list:
             if self.l_store[0]["x"][i_list_item.i] != i_list_item.vr:
                 print(
-                    "Abort: (Reader) input tuples do not match HD state. (read)"
+                    "Abort: (Reader) input tuples do not match HD"
+                    + " state. (read)"
                 )
                 exit()
             t_comp_vcom_start = time.time()
@@ -655,7 +671,8 @@ class Reader:
                 )
             else:
                 print(
-                    "Abort: (Reader) Invalid SPS signatures in the setup phase."
+                    "Abort: (Reader) Invalid SPS signatures in the"
+                    + " setup phase."
                 )
                 exit()
 
@@ -705,7 +722,8 @@ class Reader:
                 != 1
             ):
                 print(
-                    "Abort: (Reader) Invalid SPS signatures in the update phase."
+                    "Abort: (Reader) Invalid SPS signatures in the"
+                    + " update phase."
                 )
 
             self.l_store[0]["vcom"] = vcom_u
@@ -775,7 +793,8 @@ def redeem(points):
     t_redeem_start = time.time()
     if points > reader_k.l_store[0]["x"][db_size]:
         print(
-            "Abort: (Reader) Insufficient loyalty points for this operation. (redeem)"
+            "Abort: (Reader) Insufficient loyalty points for this"
+            + " operation. (redeem)"
         )
     else:
         com_db_size = pedersen_commitment.commit(
@@ -815,7 +834,8 @@ def redeem(points):
             == 0
         ):
             print(
-                "Abort: (Updater) Loyalty point commitments do not hold. (redeem)"
+                "Abort: (Updater) Loyalty point commitments do"
+                + " not hold. (redeem)"
             )
             exit()
 
@@ -838,7 +858,9 @@ def redeem(points):
 
 
 def profile(start, end, val):
-    """PPLS Profile interface (Checks whether the sum of the values contained in the database between positions 'start' and 'end' is greater than 'val')."""
+    """PPLS Profile interface (Checks whether the sum of the values 
+    contained in the database between positions 'start' and 'end' 
+    is greater than 'val')."""
     com_list = []
     open_list = []
 
@@ -911,8 +933,10 @@ profile(1, 10, 20)
 t_profile_10 = str(time.time() - t_profile_10_start)
 
 # Uncomment for storage cost measurements
-# print("CRS (par_g) in bytes = " +sys.getsizeof(reader_k.l_par[0]['par']['par_g']))
-# print("CRS (par_h) in bytes = " +sys.getsizeof(reader_k.l_par[0]['par']['par_h']))
+# print("CRS (par_g) in bytes = " + \
+# sys.getsizeof(reader_k.l_par[0]['par']['par_g']))
+# print("CRS (par_h) in bytes = " + \
+# sys.getsizeof(reader_k.l_par[0]['par']['par_h']))
 # print("Reader DB in bytes = " + str(get_real_size(reader_k.l_store[0]['x'])))
 # print("VC par in bytes = " + str(get_real_size(reader_k.l_par[0]['par'])))
 # print("Vcom in bytes = " + str(get_real_size(reader_k.l_store[0]['vcom'])))
