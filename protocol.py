@@ -827,7 +827,8 @@ parser.add_argument(
     "--keylength",
     metavar="K",
     type=int,
-    help="Paillier Encryption key size. (Supported values: 1024, 2048; Default: 2048)",
+    help="Paillier Encryption key size."
+    + " (Supported values: 1024, 2048; Default: 2048)",
 )
 parser.add_argument(
     "-r",

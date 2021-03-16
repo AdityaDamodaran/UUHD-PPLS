@@ -1275,9 +1275,7 @@ class SigmaProtocol:
             witness_integer_openings,
         )
 
-    def verifier_step_1(
-        self,
-    ):
+    def verifier_step_1(self,):
         return pairing_group.random(ZR)
 
     def verifier_step_2(

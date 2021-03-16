@@ -161,8 +161,8 @@ class FZK:
             witness_integer_openings,
         ) = sigma_protocol.prepare_integer_commitments(witness)
 
-        witness_paillier_ciphertexts = (
-            sigma_protocol.prepare_paillier_ciphertexts(witness)
+        witness_paillier_ciphertexts = sigma_protocol.prepare_paillier_ciphertexts(
+            witness
         )
 
         (
@@ -172,10 +172,8 @@ class FZK:
             dict_from_class(random_witness)
         )
 
-        random_paillier_ciphertexts = (
-            sigma_protocol.prepare_random_paillier_ciphertexts(
-                dict_from_class(random_witness)
-            )
+        random_paillier_ciphertexts = sigma_protocol.prepare_random_paillier_ciphertexts(
+            dict_from_class(random_witness)
         )
         c = sigma_protocol.verifier_step_1()
         t = {
@@ -520,11 +518,9 @@ class FZK_PR3:
                     "penco": paillier_ciphertext_open_v,
                 }
             )
-            paillier_ciphertext_random_open_v = (
-                self.paillier_encryption.encrypt(
-                    self.public_key,
-                    integer(sha256(bytes(str(random_opening_v), "utf-8"))),
-                )
+            paillier_ciphertext_random_open_v = self.paillier_encryption.encrypt(
+                self.public_key,
+                integer(sha256(bytes(str(random_opening_v), "utf-8"))),
             )
             paillier_ciphertext_random_v = self.paillier_encryption.encrypt(
                 self.public_key, integer(sha256(bytes(str(random_v), "utf-8")))
