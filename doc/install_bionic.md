@@ -17,8 +17,8 @@ You could alternatively use our `install_ubuntu.sh` script located in the root d
  1. Start by installing all prerequisites for building charm:
 
     ```
-    $ apt-get update
-    $ apt-get install -y openssl gcc python3.6 python3-pip flex bison byacc git cmake libssl-dev
+    $ sudo apt-get update
+    $ sudo apt-get install -y openssl gcc python3.6 python3-pip flex bison byacc git cmake libssl-dev
     ```
 
 2. Clone our repository:
@@ -38,18 +38,18 @@ You could alternatively use our `install_ubuntu.sh` script located in the root d
    $ tar -xvf pbc-0.5.14.tar.gz
    ```
 
-4. Build and install GMP and PBC:
+4. Build and install GMP and PBC (Warning: This will install GMP and PBC as root):
 
    ```
    $ cd gmp-6.2.1
    $ ./configure
    $ make
-   $ make install
+   $ sudo make install
    $ cd ..
    $ cd pbc-0.5.14
    $ ./configure
    $ make
-   $ make install
+   $ sudo make install
    $ cd ..
    ```
 
@@ -60,17 +60,17 @@ You could alternatively use our `install_ubuntu.sh` script located in the root d
    $ wget https://github.com/relic-toolkit/relic/archive/relic-toolkit-0.5.0.tar.gz
    $ tar -xvf relic-toolkit-0.5.0.tar.gz
    $ mkdir relic-target && cd relic-target
-   $ ../buildRELIC.sh ../relic-relic-toolkit-0.5.0/
-   $ cd ../../../../../
+   $ sudo ../buildRELIC.sh ../relic-relic-toolkit-0.5.0/
+   $ cd ../../../../../../
    ```
 
-6. Build and install Charm-Crypto:
+6. Build and install Charm-Crypto (Warning: This will install Charm-Crypto as root):
 
    ```
    $ ./configure.sh --enable-pairing-relic
    $ make
-   $ make install
-   $ ldconfig -v
+   $ sudo make install
+   $ sudo ldconfig -v
    $ cd ../../
    ```
 

@@ -72,6 +72,8 @@ if args.keylength == 1024 or args.keylength == 2048:
     keylength = args.keylength
 
 if args.size != None and int(args.size) > 10 and int(args.size) < 800000:
+    db_size = int(args.size)
+else:
     print(
         "Please enter a database size between 11 and 800000 (We need a database containing atleast 10 entries to test the profiling phase)."
     )
