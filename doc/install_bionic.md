@@ -34,6 +34,8 @@ You could alternatively use our `install_ubuntu.sh` script located in the root d
    $ wget https://gmplib.org/download/gmp/gmp-6.2.1.tar.xz
    $ wget https://crypto.stanford.edu/pbc/files/pbc-0.5.14.tar.gz
    $ git clone "https://github.com/JHUISI/charm.git"
+   $ cd charm && git checkout -q acb55513b2
+   $ cd ..
    $ tar -xvf gmp-6.2.1.tar.xz
    $ tar -xvf pbc-0.5.14.tar.gz
    ```
@@ -57,10 +59,12 @@ You could alternatively use our `install_ubuntu.sh` script located in the root d
 
    ```
    $ cd charm/charm/core/math/pairing/relic
-   $ wget https://github.com/relic-toolkit/relic/archive/relic-toolkit-0.5.0.tar.gz
-   $ tar -xvf relic-toolkit-0.5.0.tar.gz
+   $ git clone https://github.com/relic-toolkit/relic.git
+   $ cd relic
+   $ git checkout -q 0534bd5cc7
+   $ cd ..
    $ mkdir relic-target && cd relic-target
-   $ sudo ../buildRELIC.sh ../relic-relic-toolkit-0.5.0/
+   $ sudo ../buildRELIC.sh ../relic/
    $ cd ../../../../../../
    ```
 

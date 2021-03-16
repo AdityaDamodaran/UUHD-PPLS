@@ -33,11 +33,14 @@ The code will then be accessible from the `/vagrant` directory, in the virtual m
 Instructions are available [here](doc/install_bionic.md).
 
 ### Manual Installation
-Our code requires Python 3.6, and the Charm-Crypto library (v0.50) built with the Relic toolkit (v0.5.0), as described on these pages:
+Our code requires Python 3.6, and the Charm-Crypto library (v0.50) built with the Relic Toolkit (v0.5.0), as described on these pages:
 
-1. Relic toolkit: https://jhuisi.github.io/charm/relic.html#charm-with-relic
+1. Relic Toolkit: https://jhuisi.github.io/charm/relic.html#charm-with-relic
+
+   (Download Relic from its [github repository](https://github.com/relic-toolkit/relic) and checkout the version identified by commit id `0534bd5cc7`.)
 2. Charm-Crypto:  https://jhuisi.github.io/charm/install_source.html#platform-install-manual
-
+   
+   (Download Charm from its [github repository](https://github.com/JHUISI/charm))
 > Note: Charm-Crypto additionally requires PBC (v0.5.14) and GMP (v6.2.1). 
 
 Finally, use the following command to install Openpyxl (v3.0.6) and Texttable (v1.6.3): 

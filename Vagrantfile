@@ -76,6 +76,9 @@ Vagrant.configure("2") do |config|
     wget https://gmplib.org/download/gmp/gmp-6.2.1.tar.xz
     wget https://crypto.stanford.edu/pbc/files/pbc-0.5.14.tar.gz
     git clone "https://github.com/JHUISI/charm.git"
+    cd charm
+    git checkout -q acb55513b2
+    cd ..
     tar -xvf gmp-6.2.1.tar.xz
     tar -xvf pbc-0.5.14.tar.gz
     cd gmp-6.2.1
@@ -89,10 +92,12 @@ Vagrant.configure("2") do |config|
     make install
     cd ..
     cd charm/charm/core/math/pairing/relic
-    wget https://github.com/relic-toolkit/relic/archive/relic-toolkit-0.5.0.tar.gz
-    tar -xvf relic-toolkit-0.5.0.tar.gz
+    git clone https://github.com/relic-toolkit/relic.git
+    cd relic
+    git checkout -q 0534bd5cc7
+    cd ..
     mkdir relic-target && cd relic-target
-    ../buildRELIC.sh ../relic-relic-toolkit-0.5.0/
+    ../buildRELIC.sh ../relic/
     cd /home/vagrant/requirements/charm
     ./configure.sh --enable-pairing-relic
     make
