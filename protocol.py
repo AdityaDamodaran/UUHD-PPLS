@@ -1005,3 +1005,7 @@ results_workbook.save(file_name)
 draw_table(output_headings[:5], timing_data[:5])
 draw_table(output_headings[5:10], timing_data[5:10])
 draw_table(output_headings[10:], timing_data[10:])
+
+print(
+    '\nNote: Upon successful execution of this program, the profiling execution times will be independent of database size (for matching Paillier key lengths). \nThese values have been written to a file named "UUHD-PPLS-Timing-Data.xlsx", in the current working directory.'
+)
