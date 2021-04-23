@@ -19,14 +19,25 @@ These implementations were used to measure the storage and computation costs of 
 ### Virtual Machine (Vagrant)
 You can the use `Vagrantfile` file in this repository to spin up a virtual machine with a pre-configured execution environment using Vagrant: https://www.vagrantup.com.
 
-You must first install Vagrant, and then run the following command from the root directory of this repository:
+1. Download and run the VirtualBox installer for your operating system from the VirtualBox downloads page: https://www.virtualbox.org/wiki/Downloads
+
+2. Download and run the Vagrant installer for your operating system from the Vagrant downloads page: https://www.vagrantup.com/downloads
+
+3. Clone this repository, and run the `vagrant up` command from its root directory:
 ```bash
+$ git clone https://gitlab.uni.lu/APSIA/uuhd-ppls.git
+$ cd uuhd-ppls
 $ vagrant up
 ```
 
-Once the virtual machine is ready, log in with `vagrant:vagrant`.
+4. Once the virtual machine is ready, and a window with a login prompt shows up, log in with `vagrant:vagrant`.
 
-The code will then be accessible from the `/vagrant` directory, in the virtual machine window that shows up after the script downloads and installs all prerequisites.
+5. Wait until the script finishes installing all prerequisites. The code will then be accessible from the `/vagrant` directory.
+```bash 
+$ cd /vagrant
+$ python3 ./protocol.py -h
+```
+
 
 ### Manual Installation (Ubuntu)
 
