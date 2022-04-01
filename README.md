@@ -9,7 +9,7 @@ Authors:
 -->
 # Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs
 
-This repository contains the source code for an implementation of the HD (Unlinkable Updatable Hiding Database) primitive described in our paper titled "Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs", to be published at PETS 2021. It also includes an implementation of the Privacy-Preserving Loyalty Program protocol put forward in this paper, which uses the aforementioned primitive. 
+This repository contains the source code for an implementation of the HD (Unlinkable Updatable Hiding Database) primitive described in our paper titled "Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs", published at PETS 2021. It also includes an implementation of the Privacy-Preserving Loyalty Program protocol put forward in this paper, which uses the aforementioned primitive. 
 
 These implementations were used to measure the storage and computation costs of the cryptographic operations in our primitive and the protocol, for the _Efficiency Analysis_ sections of our paper.
 
@@ -110,6 +110,9 @@ The program prints measurements to console, and also appends these measurements 
 | 5.806      | 6.245             | 33.575           | 61.165           | 0.366 |
 +------------+-------------------+------------------+------------------+-------+
 ```
+
+## The Paper
+Damodaran A. and Rial A. (2021) Unlinkable Updatable Hiding Databases and Privacy-Preserving Loyalty Programs. Proceedings on Privacy Enhancing Technologies, Vol.2021 (Issue 3), pp. 95-121. https://doi.org/10.2478/popets-2021-0039
 
 ## License
 This project is licensed under the GPLv3 license.
